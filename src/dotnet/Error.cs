@@ -6,4 +6,6 @@ namespace ServiceKit.Net
         public string MessageText { get; set; }
         public string AdditionalInformation { get; set; }
     }
+
+    
 }

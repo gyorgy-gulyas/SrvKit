@@ -17,4 +17,37 @@ namespace ServiceKit.Net
         /// gRPC: INTERNAL (13), Http: 500 (Internal Server Error)
         InternalError,
     }
+
+    public static class StatusesExtensions
+    {
+        public static Protos.Statuses ToGrpc(this Statuses @this)
+        {
+            return @this switch
+            {
+                Statuses.Ok => Protos.Statuses.Ok,
+                Statuses.BadRequest => Protos.Statuses.BadRequest,
+                Statuses.Timeout => Protos.Statuses.Timeout,
+                Statuses.NotFound => Protos.Statuses.NotFound,
+                Statuses.Unauthorized => Protos.Statuses.Unauthorized,
+                Statuses.NotImplemented => Protos.Statuses.NotImplemented,
+                Statuses.InternalError => Protos.Statuses.InternalError,
+                _ => Protos.Statuses.InternalError,
+            };
+        }
+
+        public static Statuses ToDotnet(this Protos.Statuses @this)
+        {
+            return @this switch
+            {
+                Protos.Statuses.Ok => Statuses.Ok,
+                Protos.Statuses.BadRequest => Statuses.BadRequest,
+                Protos.Statuses.Timeout => Statuses.Timeout,
+                Protos.Statuses.NotFound => Statuses.NotFound,
+                Protos.Statuses.Unauthorized => Statuses.Unauthorized,
+                Protos.Statuses.NotImplemented => Statuses.NotImplemented,
+                Protos.Statuses.InternalError => Statuses.InternalError,
+                _ => Statuses.InternalError,
+            };
+        }
+    }
 }

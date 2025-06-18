@@ -3,12 +3,36 @@
   "WorkspaceRootPath": "D:\\Projects.OWN\\SrvKit\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2D7E753D-60FB-497A-B8A1-2761E0CABB29}|SrvKit.csproj|d:\\projects.own\\srvkit\\srvkit.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
-      "RelativeMoniker": "D:0:0:{2D7E753D-60FB-497A-B8A1-2761E0CABB29}|SrvKit.csproj|solutionrelative:srvkit.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+      "AbsoluteMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|d:\\projects.own\\srvkit\\src\\dotnet\\statuses.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|solutionrelative:src\\dotnet\\statuses.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{2D7E753D-60FB-497A-B8A1-2761E0CABB29}|SrvKit.csproj|d:\\projects.own\\srvkit\\src\\dotnet\\callingcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2D7E753D-60FB-497A-B8A1-2761E0CABB29}|SrvKit.csproj|solutionrelative:src\\dotnet\\callingcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|d:\\projects.own\\srvkit\\src\\dotnet\\protos\\servicekit_error.proto||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|solutionrelative:src\\dotnet\\protos\\servicekit_error.proto||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|d:\\projects.own\\srvkit\\src\\dotnet\\error.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|solutionrelative:src\\dotnet\\error.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|d:\\projects.own\\srvkit\\src\\dotnet\\callingcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|solutionrelative:src\\dotnet\\callingcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|d:\\projects.own\\srvkit\\src\\dotnet\\response.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|solutionrelative:src\\dotnet\\response.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|d:\\projects.own\\srvkit\\src\\dotnet\\obj\\debug\\net8.0\\protos\\servicekiterror.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|solutionrelative:src\\dotnet\\obj\\debug\\net8.0\\protos\\servicekiterror.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|d:\\projects.own\\srvkit\\src\\dotnet\\srvkit.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{C1F180B5-0A73-18A4-65D4-8B00DDDA78B3}|src\\dotnet\\SrvKit.csproj|solutionrelative:src\\dotnet\\srvkit.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|NewFolder1{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|D:\\Projects.OWN\\SrvKit\\src\\protos\\servicekit_error.proto||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|NewFolder1{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|solutionrelative:src\\protos\\servicekit_error.proto||{3B902123-F8A7-4915-9F01-361F908088D0}"
     }
   ],
   "DocumentGroupContainers": [
@@ -27,25 +51,103 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "SrvKit",
-              "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\SrvKit.csproj",
-              "RelativeDocumentMoniker": "SrvKit.csproj",
-              "ToolTip": "D:\\Projects.OWN\\SrvKit\\SrvKit.csproj",
-              "RelativeToolTip": "SrvKit.csproj",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAZAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
-              "WhenOpened": "2025-06-12T17:45:47.215Z",
+              "Title": "Statuses.cs",
+              "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\Statuses.cs",
+              "RelativeDocumentMoniker": "src\\dotnet\\Statuses.cs",
+              "ToolTip": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\Statuses.cs",
+              "RelativeToolTip": "src\\dotnet\\Statuses.cs",
+              "ViewState": "AgIAAAIAAAAAAAAAAAA6wCQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-18T09:10:55.615Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "servicekit_error.proto",
+              "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\Protos\\servicekit_error.proto",
+              "RelativeDocumentMoniker": "src\\dotnet\\Protos\\servicekit_error.proto",
+              "ToolTip": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\Protos\\servicekit_error.proto",
+              "RelativeToolTip": "src\\dotnet\\Protos\\servicekit_error.proto",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB8AAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003853|",
+              "WhenOpened": "2025-06-18T09:10:45.208Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ServicekitError.cs",
+              "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\obj\\Debug\\net8.0\\Protos\\ServicekitError.cs",
+              "RelativeDocumentMoniker": "src\\dotnet\\obj\\Debug\\net8.0\\Protos\\ServicekitError.cs",
+              "ToolTip": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\obj\\Debug\\net8.0\\Protos\\ServicekitError.cs",
+              "RelativeToolTip": "src\\dotnet\\obj\\Debug\\net8.0\\Protos\\ServicekitError.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAE4AAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-18T09:08:11.566Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Error.cs",
+              "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\Error.cs",
+              "RelativeDocumentMoniker": "src\\dotnet\\Error.cs",
+              "ToolTip": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\Error.cs",
+              "RelativeToolTip": "src\\dotnet\\Error.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-18T08:20:28.175Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Response.cs",
+              "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\Response.cs",
+              "RelativeDocumentMoniker": "src\\dotnet\\Response.cs",
+              "ToolTip": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\Response.cs",
+              "RelativeToolTip": "src\\dotnet\\Response.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-18T08:14:07.696Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "servicekit_error.proto",
+              "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\src\\protos\\servicekit_error.proto",
+              "RelativeDocumentMoniker": "src\\protos\\servicekit_error.proto",
+              "ToolTip": "D:\\Projects.OWN\\SrvKit\\src\\protos\\servicekit_error.proto",
+              "RelativeToolTip": "src\\protos\\servicekit_error.proto",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003853|",
+              "WhenOpened": "2025-06-18T08:13:29.89Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "SrvKit",
+              "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\SrvKit.csproj",
+              "RelativeDocumentMoniker": "src\\dotnet\\SrvKit.csproj",
+              "ToolTip": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\SrvKit.csproj",
+              "RelativeToolTip": "src\\dotnet\\SrvKit.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-06-18T08:12:30.9Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "CallingContext.cs",
               "DocumentMoniker": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\CallingContext.cs",
               "RelativeDocumentMoniker": "src\\dotnet\\CallingContext.cs",
               "ToolTip": "D:\\Projects.OWN\\SrvKit\\src\\dotnet\\CallingContext.cs",
               "RelativeToolTip": "src\\dotnet\\CallingContext.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAACYAAAAkAAAAAAAAAA==",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAABQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-06-12T17:45:31.836Z",
               "EditorCaption": ""
