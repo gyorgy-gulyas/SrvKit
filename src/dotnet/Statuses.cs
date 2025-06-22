@@ -35,7 +35,7 @@ namespace ServiceKit.Net
             };
         }
 
-        public static Statuses ToDotnet(this Protos.Statuses @this)
+        public static Statuses FromGrpc(this Protos.Statuses @this)
         {
             return @this switch
             {
