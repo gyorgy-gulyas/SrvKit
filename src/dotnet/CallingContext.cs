@@ -3,6 +3,7 @@ using Grpc.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.ObjectPool;
+using Microsoft.AspNetCore.Http;
 
 namespace ServiceKit.Net
 {
@@ -77,6 +78,77 @@ namespace ServiceKit.Net
             ctx.ClientInfo.GatewayVersion = GetInt(const_gateway_version);
 
             return ctx;
+        }
+
+        public static CallingContext PoolFromHttpContext(HttpContext @this, ILogger logger = null)
+        {
+            var ctx = _pool.Get();
+            var headers = @this.Request.Headers;
+            var user = @this.User;
+
+            string Get(string key) =>
+                headers.TryGetValue(key, out var value) ? value.ToString() : string.Empty;
+
+            int GetInt(string key) =>
+                int.TryParse(Get(key), out var result) ? result : 0;
+
+            // Claims most már a felhasználói identity-ből jön
+            ctx.Claims = new Dictionary<string, string>();
+            if (user?.Identity?.IsAuthenticated == true)
+            {
+                foreach (var claim in user.Claims)
+                {
+                    ctx.Claims[claim.Type] = claim.Value;
+                }
+            }
+
+            ctx.CorrelationId = Get(const_correlation_id);
+            ctx.CallStack = Get(const_call_stack);
+            ctx.TenantId = Get(const_tenant_id);
+            ctx.Logger = logger ?? NullLogger.Instance;
+
+            ctx.ClientInfo ??= new ClientInfoData();
+            ctx.ClientInfo.CallingUserId = user?.Identity?.Name ?? Get(const_calling_user_id); // fallback headerre
+            ctx.ClientInfo.ClientLanguage = Get(const_client_language);
+            ctx.ClientInfo.ClientApplication = Get(const_client_application);
+            ctx.ClientInfo.ClientVersion = Get(const_client_version);
+            ctx.ClientInfo.ClientTimeZoneOffset = GetInt(const_client_tz_offset);
+            ctx.ClientInfo.GatewayVersion = GetInt(const_gateway_version);
+
+            return ctx;
+        }
+
+        public static void FillHttpContext(CallingContext from, HttpContext context)
+        {
+            var headers = context.Response.Headers;
+
+            void Set(string key, string value)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    headers[key] = value;
+            }
+
+            void SetInt(string key, int value)
+            {
+                if (value != 0)
+                    headers[key] = value.ToString(CultureInfo.InvariantCulture);
+            }
+
+            Set(const_correlation_id, from.CorrelationId);
+            Set(const_tenant_id, from.TenantId);
+            Set(const_call_stack, from.CallStack);
+
+            if (from.ClientInfo is not null)
+            {
+                Set(const_calling_user_id, from.ClientInfo.CallingUserId);
+                Set(const_client_language, from.ClientInfo.ClientLanguage);
+                Set(const_client_application, from.ClientInfo.ClientApplication);
+                Set(const_client_version, from.ClientInfo.ClientVersion);
+                SetInt(const_client_tz_offset, from.ClientInfo.ClientTimeZoneOffset);
+                SetInt(const_gateway_version, from.ClientInfo.GatewayVersion);
+            }
+
+            // -> Claims NEM kerülnek kiírásra fejlécekbe
         }
 
         public void ReturnToPool()
