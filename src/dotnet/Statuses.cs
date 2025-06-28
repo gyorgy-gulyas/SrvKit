@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace ServiceKit.Net
 {
     public enum Statuses
@@ -6,7 +8,7 @@ namespace ServiceKit.Net
         Ok, 
         /// gRPC: INVALID_ARGUMENT(3), Http: 400 (BadRequest)
         BadRequest,
-        /// gRPC: DEADLINE_EXCEEDED (4), Http: 504 (Gateway Timeout)
+        /// gRPC: DEADLINE_EXCEEDED (4), Http: 408 (Request Timeout)
         Timeout,
         /// gRPC: NOT_FOUND (5), Http: 404 (404 Not Found)
         NotFound,
@@ -47,6 +49,20 @@ namespace ServiceKit.Net
                 Protos.Statuses.NotImplemented => Statuses.NotImplemented,
                 Protos.Statuses.InternalError => Statuses.InternalError,
                 _ => Statuses.InternalError,
+            };
+        }
+        public static int ToHttp(this Statuses @this)
+        {
+            return @this switch
+            {
+                Statuses.Ok => StatusCodes.Status200OK,
+                Statuses.BadRequest => StatusCodes.Status400BadRequest,
+                Statuses.Timeout => StatusCodes.Status408RequestTimeout,
+                Statuses.NotFound => StatusCodes.Status404NotFound,
+                Statuses.Unauthorized => StatusCodes.Status401Unauthorized,
+                Statuses.NotImplemented => StatusCodes.Status501NotImplemented,
+                Statuses.InternalError => StatusCodes.Status500InternalServerError,
+                _ => StatusCodes.Status500InternalServerError,
             };
         }
     }
