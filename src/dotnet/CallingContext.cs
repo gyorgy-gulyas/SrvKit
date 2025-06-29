@@ -1,9 +1,10 @@
-using System.Globalization;
 using Grpc.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.ObjectPool;
-using Microsoft.AspNetCore.Http;
+using System.Globalization;
+using System.Net.Http.Headers;
 
 namespace ServiceKit.Net
 {
@@ -118,39 +119,6 @@ namespace ServiceKit.Net
             return ctx;
         }
 
-        public static void FillHttpContext(CallingContext from, HttpContext context)
-        {
-            var headers = context.Response.Headers;
-
-            void Set(string key, string value)
-            {
-                if (!string.IsNullOrWhiteSpace(value))
-                    headers[key] = value;
-            }
-
-            void SetInt(string key, int value)
-            {
-                if (value != 0)
-                    headers[key] = value.ToString(CultureInfo.InvariantCulture);
-            }
-
-            Set(const_correlation_id, from.CorrelationId);
-            Set(const_tenant_id, from.TenantId);
-            Set(const_call_stack, from.CallStack);
-
-            if (from.ClientInfo is not null)
-            {
-                Set(const_calling_user_id, from.ClientInfo.CallingUserId);
-                Set(const_client_language, from.ClientInfo.ClientLanguage);
-                Set(const_client_application, from.ClientInfo.ClientApplication);
-                Set(const_client_version, from.ClientInfo.ClientVersion);
-                SetInt(const_client_tz_offset, from.ClientInfo.ClientTimeZoneOffset);
-                SetInt(const_gateway_version, from.ClientInfo.GatewayVersion);
-            }
-
-            // -> Claims NEM kerülnek kiírásra fejlécekbe
-        }
-
         public void ReturnToPool()
         {
             Claims.Clear();
@@ -215,6 +183,43 @@ namespace ServiceKit.Net
             }
 
             return metadata;
+        }
+
+        public void FillHttpRequest(HttpRequestMessage request, string serviceName, string methodName)
+        {
+            var headers = request.Headers;
+
+            void Set(string key, string value)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    headers.Add( key, value );
+            }
+
+            void SetInt(string key, int value)
+            {
+                if (value != 0)
+                    headers.Add(key, value.ToString(CultureInfo.InvariantCulture));
+            }
+
+            Set(const_correlation_id, CorrelationId);
+            Set(const_tenant_id, TenantId);
+
+            var newStack = string.IsNullOrWhiteSpace(CallStack)
+                ? serviceName + "." + methodName
+                : CallStack + " -> " + serviceName + "." + methodName;
+            Set(const_call_stack, newStack);
+
+            if (ClientInfo is not null)
+            {
+                Set(const_calling_user_id, ClientInfo.CallingUserId);
+                Set(const_client_language, ClientInfo.ClientLanguage);
+                Set(const_client_application, ClientInfo.ClientApplication);
+                Set(const_client_version, ClientInfo.ClientVersion);
+                SetInt(const_client_tz_offset, ClientInfo.ClientTimeZoneOffset);
+                SetInt(const_gateway_version, ClientInfo.GatewayVersion);
+            }
+
+            // -> Claims NEM kerülnek kiírásra fejlécekbe
         }
     }
 }

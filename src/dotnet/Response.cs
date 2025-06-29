@@ -2,7 +2,7 @@ namespace ServiceKit.Net
 {
     public class Response
     {
-        public Error Error { get; private set; } = null;
+        public Error Error { get; protected set; } = null;
         public bool IsSuccess() => Error == null;
         public static Response Success() => new();
         public static Response Failure(Error error) => new() { Error = error };
@@ -14,5 +14,6 @@ namespace ServiceKit.Net
         public TValue Value { get; private set; } = null;
         public bool HasValue() => Value != null;
         public static Response<TValue> Success(TValue value) => new() { Value = value };
+        public static new Response<TValue> Failure(Error error) => new() { Error = error };
     }
 }

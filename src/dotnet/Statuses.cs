@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System.Net;
 
 namespace ServiceKit.Net
 {
@@ -51,6 +52,47 @@ namespace ServiceKit.Net
                 _ => Statuses.InternalError,
             };
         }
+
+        public static Statuses FromGrpc(this Grpc.Core.StatusCode @this)
+        {
+            switch (@this)
+            {
+                case Grpc.Core.StatusCode.OK:
+                    return Statuses.Ok;
+
+                case Grpc.Core.StatusCode.InvalidArgument:
+                case Grpc.Core.StatusCode.AlreadyExists:
+                case Grpc.Core.StatusCode.FailedPrecondition:
+                case Grpc.Core.StatusCode.OutOfRange:
+                    return Statuses.BadRequest;
+
+                case Grpc.Core.StatusCode.Cancelled:
+                case Grpc.Core.StatusCode.DeadlineExceeded:
+                case Grpc.Core.StatusCode.Aborted:
+                    return Statuses.Timeout;
+
+
+                case Grpc.Core.StatusCode.NotFound:
+                    return Statuses.NotFound;
+
+                case Grpc.Core.StatusCode.PermissionDenied:
+                case Grpc.Core.StatusCode.Unauthenticated:
+                    return Statuses.Unauthorized;
+
+                case Grpc.Core.StatusCode.Unimplemented:
+                    return Statuses.NotImplemented;
+
+                case Grpc.Core.StatusCode.DataLoss:
+                case Grpc.Core.StatusCode.Unavailable:
+                case Grpc.Core.StatusCode.Internal:
+                case Grpc.Core.StatusCode.Unknown:
+                case Grpc.Core.StatusCode.ResourceExhausted:
+                default:
+                    return Statuses.InternalError;
+            }
+            ;
+        }
+
         public static int ToHttp(this Statuses @this)
         {
             return @this switch
@@ -64,6 +106,51 @@ namespace ServiceKit.Net
                 Statuses.InternalError => StatusCodes.Status500InternalServerError,
                 _ => StatusCodes.Status500InternalServerError,
             };
+        }
+
+        public static Statuses FromHttp(this HttpStatusCode @this)
+        {
+            switch (@this)
+            {
+                case HttpStatusCode.OK:
+                    return Statuses.Ok;
+
+                case HttpStatusCode.BadRequest:
+                case HttpStatusCode.Ambiguous:
+                case HttpStatusCode.Moved:
+                case HttpStatusCode.LengthRequired:
+                case HttpStatusCode.PreconditionFailed:
+                case HttpStatusCode.RequestEntityTooLarge:
+                case HttpStatusCode.RequestUriTooLong:
+                case HttpStatusCode.UnsupportedMediaType:
+                case HttpStatusCode.HttpVersionNotSupported:
+                    return Statuses.BadRequest;
+
+                case HttpStatusCode.RequestTimeout:
+                    return Statuses.Timeout;
+
+                case HttpStatusCode.NotFound:
+                case HttpStatusCode.BadGateway:
+                    return Statuses.NotFound;
+
+                case HttpStatusCode.Unauthorized:
+                case HttpStatusCode.PaymentRequired:
+                case HttpStatusCode.Forbidden:
+                case HttpStatusCode.NonAuthoritativeInformation:
+                case HttpStatusCode.MethodNotAllowed:
+                case HttpStatusCode.NetworkAuthenticationRequired:
+                case HttpStatusCode.ProxyAuthenticationRequired:
+                    return Statuses.Unauthorized;
+
+                case HttpStatusCode.NotImplemented:
+                    return Statuses.NotImplemented;
+
+                case HttpStatusCode.InternalServerError:
+                    return Statuses.InternalError;
+
+                default:
+                    return Statuses.InternalError;
+            }
         }
     }
 }
