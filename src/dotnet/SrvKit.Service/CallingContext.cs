@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.ObjectPool;
 using System.Globalization;
-using System.Net.Http.Headers;
 
 namespace ServiceKit.Net
 {
