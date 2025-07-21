@@ -9,17 +9,6 @@ namespace ServiceKit.Net
 {
     public class CallingContext
     {
-        private const string const_calling_user_id = "calling-user-id";
-        private const string const_client_language = "client-language";
-        private const string const_correlation_id = "correlation-id";
-        private const string const_call_stack = "call-stack";
-        private const string const_tenant_id = "tenant-id";
-        private const string const_client_application = "client-application";
-        private const string const_client_version = "client-version";
-        private const string const_client_tz_offset = "client-tz-offset";
-        private const string const_gateway_version = "gateway_version";
-        private const string const_claim = "claim-";
-
         public string CorrelationId { get; internal set; }
         public string CallStack { get; internal set; } = string.Empty;
         public string TenantId { get; internal set; }
@@ -29,11 +18,12 @@ namespace ServiceKit.Net
         public class ClientInfoData
         {
             public string CallingUserId { get; internal set; }
+            public string CallingUserName { get; internal set; }
             public string ClientLanguage { get; internal set; }
             public string ClientApplication { get; internal set; }
             public string ClientVersion { get; internal set; }
             public int ClientTimeZoneOffset { get; internal set; }
-            public int GatewayVersion { get; internal set; }
+            public int ApiClientKitVersion { get; internal set; }
         }
         public ClientInfoData ClientInfo { get; internal set; }
 
@@ -60,22 +50,23 @@ namespace ServiceKit.Net
             ctx.Claims = new Dictionary<string, string>(metaMap.Count);
             foreach (var kv in metaMap)
             {
-                if (kv.Key.StartsWith(const_claim))
-                    ctx.Claims[kv.Key.Substring(const_claim.Length)] = kv.Value;
+                if (kv.Key.StartsWith(ServiceConstans.const_claim))
+                    ctx.Claims[kv.Key.Substring(ServiceConstans.const_claim.Length)] = kv.Value;
             }
 
-            ctx.CorrelationId = Get(const_correlation_id);
-            ctx.CallStack = Get(const_call_stack);
-            ctx.TenantId = Get(const_tenant_id);
+            ctx.CorrelationId = Get(ServiceConstans.const_correlation_id);
+            ctx.CallStack = Get(ServiceConstans.const_call_stack);
+            ctx.TenantId = Get(ServiceConstans.const_tenant_id);
             ctx.Logger = logger ?? NullLogger.Instance;
 
             ctx.ClientInfo ??= new ClientInfoData();
-            ctx.ClientInfo.CallingUserId = Get(const_calling_user_id);
-            ctx.ClientInfo.ClientLanguage = Get(const_client_language);
-            ctx.ClientInfo.ClientApplication = Get(const_client_application);
-            ctx.ClientInfo.ClientVersion = Get(const_client_version);
-            ctx.ClientInfo.ClientTimeZoneOffset = GetInt(const_client_tz_offset);
-            ctx.ClientInfo.GatewayVersion = GetInt(const_gateway_version);
+            ctx.ClientInfo.CallingUserId = Get(ServiceConstans.const_calling_user_id);
+            ctx.ClientInfo.CallingUserName = Get(ServiceConstans.const_calling_user_name);
+            ctx.ClientInfo.ClientLanguage = Get(ServiceConstans.const_client_language);
+            ctx.ClientInfo.ClientApplication = Get(ServiceConstans.const_client_application);
+            ctx.ClientInfo.ClientVersion = Get(ServiceConstans.const_client_version);
+            ctx.ClientInfo.ClientTimeZoneOffset = GetInt(ServiceConstans.const_client_tz_offset);
+            ctx.ClientInfo.ApiClientKitVersion = GetInt(ServiceConstans.const_api_client_kit_version);
 
             return ctx;
         }
@@ -102,18 +93,19 @@ namespace ServiceKit.Net
                 }
             }
 
-            ctx.CorrelationId = Get(const_correlation_id);
-            ctx.CallStack = Get(const_call_stack);
-            ctx.TenantId = Get(const_tenant_id);
+            ctx.CorrelationId = Get(ServiceConstans.const_correlation_id);
+            ctx.CallStack = Get(ServiceConstans.const_call_stack);
+            ctx.TenantId = Get(ServiceConstans.const_tenant_id);
             ctx.Logger = logger ?? NullLogger.Instance;
 
             ctx.ClientInfo ??= new ClientInfoData();
-            ctx.ClientInfo.CallingUserId = user?.Identity?.Name ?? Get(const_calling_user_id); // fallback headerre
-            ctx.ClientInfo.ClientLanguage = Get(const_client_language);
-            ctx.ClientInfo.ClientApplication = Get(const_client_application);
-            ctx.ClientInfo.ClientVersion = Get(const_client_version);
-            ctx.ClientInfo.ClientTimeZoneOffset = GetInt(const_client_tz_offset);
-            ctx.ClientInfo.GatewayVersion = GetInt(const_gateway_version);
+            ctx.ClientInfo.CallingUserId = Get(ServiceConstans.const_calling_user_id);
+            ctx.ClientInfo.CallingUserName = user?.Identity?.Name ?? Get(ServiceConstans.const_calling_user_name); // fallback to header
+            ctx.ClientInfo.ClientLanguage = Get(ServiceConstans.const_client_language);
+            ctx.ClientInfo.ClientApplication = Get(ServiceConstans.const_client_application);
+            ctx.ClientInfo.ClientVersion = Get(ServiceConstans.const_client_version);
+            ctx.ClientInfo.ClientTimeZoneOffset = GetInt(ServiceConstans.const_client_tz_offset);
+            ctx.ClientInfo.ApiClientKitVersion = GetInt(ServiceConstans.const_api_client_kit_version);
 
             return ctx;
         }
@@ -131,7 +123,7 @@ namespace ServiceKit.Net
                 ClientInfo.ClientApplication = null;
                 ClientInfo.ClientVersion = null;
                 ClientInfo.ClientTimeZoneOffset = 0;
-                ClientInfo.GatewayVersion = 0;
+                ClientInfo.ApiClientKitVersion = 0;
             }
 
             Logger = NullLogger.Instance;
@@ -154,29 +146,30 @@ namespace ServiceKit.Net
                     metadata.Add(key, value.ToString(CultureInfo.InvariantCulture));
             }
 
-            AddIfNotNullOrEmpty(const_correlation_id, CorrelationId);
-            AddIfNotNullOrEmpty(const_tenant_id, TenantId);
+            AddIfNotNullOrEmpty(ServiceConstans.const_correlation_id, CorrelationId);
+            AddIfNotNullOrEmpty(ServiceConstans.const_tenant_id, TenantId);
 
             var newStack = string.IsNullOrWhiteSpace(CallStack)
                 ? serviceName + "." + methodName
                 : CallStack + " -> " + serviceName + "." + methodName;
-            AddIfNotNullOrEmpty(const_call_stack, newStack);
+            AddIfNotNullOrEmpty(ServiceConstans.const_call_stack, newStack);
 
             if (ClientInfo is not null)
             {
-                AddIfNotNullOrEmpty(const_calling_user_id, ClientInfo.CallingUserId);
-                AddIfNotNullOrEmpty(const_client_language, ClientInfo.ClientLanguage);
-                AddIfNotNullOrEmpty(const_client_application, ClientInfo.ClientApplication);
-                AddIfNotNullOrEmpty(const_client_version, ClientInfo.ClientVersion);
-                AddIfNotZero(const_client_tz_offset, ClientInfo.ClientTimeZoneOffset);
-                AddIfNotZero(const_gateway_version, ClientInfo.GatewayVersion);
+                AddIfNotNullOrEmpty(ServiceConstans.const_calling_user_id, ClientInfo.CallingUserId);
+                AddIfNotNullOrEmpty(ServiceConstans.const_calling_user_name, ClientInfo.CallingUserName);
+                AddIfNotNullOrEmpty(ServiceConstans.const_client_language, ClientInfo.ClientLanguage);
+                AddIfNotNullOrEmpty(ServiceConstans.const_client_application, ClientInfo.ClientApplication);
+                AddIfNotNullOrEmpty(ServiceConstans.const_client_version, ClientInfo.ClientVersion);
+                AddIfNotZero(ServiceConstans.const_client_tz_offset, ClientInfo.ClientTimeZoneOffset);
+                AddIfNotZero(ServiceConstans.const_api_client_kit_version, ClientInfo.ApiClientKitVersion);
             }
 
             if (Claims != null)
             {
                 foreach (var kv in Claims)
                 {
-                    var key = const_claim + kv.Key;
+                    var key = ServiceConstans.const_claim + kv.Key;
                     metadata.Add(key, kv.Value);
                 }
             }
@@ -187,6 +180,7 @@ namespace ServiceKit.Net
         public void FillHttpRequest(HttpRequestMessage request, string serviceName, string methodName)
         {
             var headers = request.Headers;
+            headers.Add("x-request-id", Guid.NewGuid().ToString());
 
             void Set(string key, string value)
             {
@@ -200,22 +194,23 @@ namespace ServiceKit.Net
                     headers.Add(key, value.ToString(CultureInfo.InvariantCulture));
             }
 
-            Set(const_correlation_id, CorrelationId);
-            Set(const_tenant_id, TenantId);
+            Set(ServiceConstans.const_correlation_id, CorrelationId);
+            Set(ServiceConstans.const_tenant_id, TenantId);
 
             var newStack = string.IsNullOrWhiteSpace(CallStack)
                 ? serviceName + "." + methodName
                 : CallStack + " -> " + serviceName + "." + methodName;
-            Set(const_call_stack, newStack);
+            Set(ServiceConstans.const_call_stack, newStack);
 
             if (ClientInfo is not null)
             {
-                Set(const_calling_user_id, ClientInfo.CallingUserId);
-                Set(const_client_language, ClientInfo.ClientLanguage);
-                Set(const_client_application, ClientInfo.ClientApplication);
-                Set(const_client_version, ClientInfo.ClientVersion);
-                SetInt(const_client_tz_offset, ClientInfo.ClientTimeZoneOffset);
-                SetInt(const_gateway_version, ClientInfo.GatewayVersion);
+                Set(ServiceConstans.const_calling_user_id, ClientInfo.CallingUserId);
+                Set(ServiceConstans.const_calling_user_name, ClientInfo.CallingUserName);
+                Set(ServiceConstans.const_client_language, ClientInfo.ClientLanguage);
+                Set(ServiceConstans.const_client_application, ClientInfo.ClientApplication);
+                Set(ServiceConstans.const_client_version, ClientInfo.ClientVersion);
+                SetInt(ServiceConstans.const_client_tz_offset, ClientInfo.ClientTimeZoneOffset);
+                SetInt(ServiceConstans.const_api_client_kit_version, ClientInfo.ApiClientKitVersion);
             }
 
             // -> Claims NEM kerülnek kiírásra fejlécekbe
