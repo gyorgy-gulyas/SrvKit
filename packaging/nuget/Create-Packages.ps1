@@ -16,12 +16,16 @@ $version = Get-Content .\.version
 $currentTime = Get-Date -UFormat "%y%m%d%H%M%S"
 $buildNumber = "$version"
 
+Write-Host "build project with version: $version"
+
 # Find all .csproj files (excluding those in /obj folders) and pack them
-$projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\\obj\\' }
+$projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\\obj\\'-and $_.Name -notmatch '\.Test(s)?\.csproj$' }
 
 foreach ($proj in $projects) {
+    Write-Host "build: $proj"
     dotnet pack $proj.FullName `
         -c $configuration `
+        -v minimal `
         -o ./temp `
         -p:PackageVersion=$buildNumber `
         -p:Version=$buildNumber `
@@ -31,7 +35,7 @@ foreach ($proj in $projects) {
 # If not OnlyPack, copy the packages to the local development feed
 if( $OnlyPack -eq $False )
 {
-    Write-Host "Publishing package to local dev feed"
+    Write-Host "Publishing package to local dev feed: $localFeedPath"
 
     $localFeedPath = $env:LOCAL_DEV_NUGET_FEED_PATH
     if (-not (Test-Path $localFeedPath)) {
@@ -42,6 +46,7 @@ if( $OnlyPack -eq $False )
     # Copy .nupkg files to local NuGet feed directory
     $packages = Get-ChildItem -Path ./temp -Filter "*.nupkg"
     foreach ($pkg in $packages) {
+        Write-Host "publish: $pkg"
         dotnet nuget add source $localFeedPath -n LocalDev -p -c --store-password-in-clear-text -NonInteractive -Force | Out-Null
         Copy-Item $pkg.FullName -Destination $localFeedPath
     }
@@ -49,3 +54,7 @@ if( $OnlyPack -eq $False )
     # Clean up temp folder
     Remove-Item ./temp -Recurse -Force
 }
+
+# Navigate back to the repository root
+Set-Location $PSScriptRoot
+
