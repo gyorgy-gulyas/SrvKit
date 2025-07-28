@@ -12,13 +12,13 @@ namespace ServiceKit.Net
         public string CorrelationId { get; internal set; }
         public string CallStack { get; internal set; } = string.Empty;
         public string TenantId { get; internal set; }
+        public string IdentityId { get; internal set; }
+        public string IdentityName { get; internal set; }
         public Dictionary<string, string> Claims { get; internal set; }
         public ILogger Logger { get; internal set; } = NullLogger.Instance;
 
         public class ClientInfoData
         {
-            public string CallingUserId { get; internal set; }
-            public string CallingUserName { get; internal set; }
             public string ClientLanguage { get; internal set; }
             public string ClientApplication { get; internal set; }
             public string ClientVersion { get; internal set; }
@@ -57,11 +57,11 @@ namespace ServiceKit.Net
             ctx.CorrelationId = Get(ServiceConstans.const_correlation_id);
             ctx.CallStack = Get(ServiceConstans.const_call_stack);
             ctx.TenantId = Get(ServiceConstans.const_tenant_id);
+            ctx.IdentityId = Get(ServiceConstans.const_identity_id);
+            ctx.IdentityName = Get(ServiceConstans.const_identity_name);
             ctx.Logger = logger ?? NullLogger.Instance;
 
             ctx.ClientInfo ??= new ClientInfoData();
-            ctx.ClientInfo.CallingUserId = Get(ServiceConstans.const_calling_user_id);
-            ctx.ClientInfo.CallingUserName = Get(ServiceConstans.const_calling_user_name);
             ctx.ClientInfo.ClientLanguage = Get(ServiceConstans.const_client_language);
             ctx.ClientInfo.ClientApplication = Get(ServiceConstans.const_client_application);
             ctx.ClientInfo.ClientVersion = Get(ServiceConstans.const_client_version);
@@ -96,11 +96,11 @@ namespace ServiceKit.Net
             ctx.CorrelationId = Get(ServiceConstans.const_correlation_id);
             ctx.CallStack = Get(ServiceConstans.const_call_stack);
             ctx.TenantId = Get(ServiceConstans.const_tenant_id);
+            ctx.IdentityId = Get(ServiceConstans.const_identity_id);
+            ctx.IdentityName = Get(ServiceConstans.const_identity_name); // fallback to header
             ctx.Logger = logger ?? NullLogger.Instance;
 
             ctx.ClientInfo ??= new ClientInfoData();
-            ctx.ClientInfo.CallingUserId = Get(ServiceConstans.const_calling_user_id);
-            ctx.ClientInfo.CallingUserName = user?.Identity?.Name ?? Get(ServiceConstans.const_calling_user_name); // fallback to header
             ctx.ClientInfo.ClientLanguage = Get(ServiceConstans.const_client_language);
             ctx.ClientInfo.ClientApplication = Get(ServiceConstans.const_client_application);
             ctx.ClientInfo.ClientVersion = Get(ServiceConstans.const_client_version);
@@ -116,9 +116,10 @@ namespace ServiceKit.Net
             CorrelationId = string.Empty;
             CallStack = string.Empty;
             TenantId = string.Empty;
+            IdentityId = string.Empty;
+            IdentityName = string.Empty;
             if (ClientInfo != null)
             {
-                ClientInfo.CallingUserId = null;
                 ClientInfo.ClientLanguage = null;
                 ClientInfo.ClientApplication = null;
                 ClientInfo.ClientVersion = null;
@@ -148,6 +149,8 @@ namespace ServiceKit.Net
 
             AddIfNotNullOrEmpty(ServiceConstans.const_correlation_id, CorrelationId);
             AddIfNotNullOrEmpty(ServiceConstans.const_tenant_id, TenantId);
+            AddIfNotNullOrEmpty(ServiceConstans.const_identity_id, IdentityId);
+            AddIfNotNullOrEmpty(ServiceConstans.const_identity_name, IdentityName);
 
             var newStack = string.IsNullOrWhiteSpace(CallStack)
                 ? serviceName + "." + methodName
@@ -156,8 +159,6 @@ namespace ServiceKit.Net
 
             if (ClientInfo is not null)
             {
-                AddIfNotNullOrEmpty(ServiceConstans.const_calling_user_id, ClientInfo.CallingUserId);
-                AddIfNotNullOrEmpty(ServiceConstans.const_calling_user_name, ClientInfo.CallingUserName);
                 AddIfNotNullOrEmpty(ServiceConstans.const_client_language, ClientInfo.ClientLanguage);
                 AddIfNotNullOrEmpty(ServiceConstans.const_client_application, ClientInfo.ClientApplication);
                 AddIfNotNullOrEmpty(ServiceConstans.const_client_version, ClientInfo.ClientVersion);
@@ -185,7 +186,7 @@ namespace ServiceKit.Net
             void Set(string key, string value)
             {
                 if (!string.IsNullOrWhiteSpace(value))
-                    headers.Add( key, value );
+                    headers.Add(key, value);
             }
 
             void SetInt(string key, int value)
@@ -196,6 +197,8 @@ namespace ServiceKit.Net
 
             Set(ServiceConstans.const_correlation_id, CorrelationId);
             Set(ServiceConstans.const_tenant_id, TenantId);
+            Set(ServiceConstans.const_identity_id, IdentityId);
+            Set(ServiceConstans.const_identity_name, IdentityName);
 
             var newStack = string.IsNullOrWhiteSpace(CallStack)
                 ? serviceName + "." + methodName
@@ -204,8 +207,6 @@ namespace ServiceKit.Net
 
             if (ClientInfo is not null)
             {
-                Set(ServiceConstans.const_calling_user_id, ClientInfo.CallingUserId);
-                Set(ServiceConstans.const_calling_user_name, ClientInfo.CallingUserName);
                 Set(ServiceConstans.const_client_language, ClientInfo.ClientLanguage);
                 Set(ServiceConstans.const_client_application, ClientInfo.ClientApplication);
                 Set(ServiceConstans.const_client_version, ClientInfo.ClientVersion);

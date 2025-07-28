@@ -2,8 +2,8 @@ namespace ServiceKit.Net
 {
     public static class ServiceConstans
     {
-        public const string const_calling_user_id = "calling-user-id";
-        public const string const_calling_user_name = "calling-user-name";
+        public const string const_identity_id = "identity-id";
+        public const string const_identity_name = "identity-name";
         public const string const_client_language = "client-language";
         public const string const_correlation_id = "correlation-id";
         public const string const_call_stack = "call-stack";
