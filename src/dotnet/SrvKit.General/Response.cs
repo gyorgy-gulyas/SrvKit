@@ -22,9 +22,9 @@ namespace ServiceKit.Net
     public class Response<TValue> : Response
         where TValue : class
     {
-        public Response(TValue Value)
+        public Response(TValue value)
         {
-            Value = null;
+            Value = value;
             Error = null;
         }
 
