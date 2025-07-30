@@ -4,6 +4,7 @@ namespace ServiceKit.Net
     {
         public const string const_identity_id = "identity-id";
         public const string const_identity_name = "identity-name";
+        public const string const_identity_type = "identity-type";
         public const string const_client_language = "client-language";
         public const string const_correlation_id = "correlation-id";
         public const string const_call_stack = "call-stack";

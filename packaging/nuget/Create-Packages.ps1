@@ -1,5 +1,11 @@
 param([switch]$ReleaseConfiguration, [switch]$OnlyPack)
 
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+$env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+$env:DOTNET_NOLOGO = "true"
+$env:DOTNET_DISABLE_WORKLOAD_UPDATES = "true"
+
 # Set configuration to Release if the switch is provided
 $configuration = "Debug"
 if( $ReleaseConfiguration -eq $True )
@@ -8,8 +14,8 @@ if( $ReleaseConfiguration -eq $True )
 }
 
 # Navigate to the repository root
-Set-Location $PSScriptRoot
-Set-Location -Path ../.. -PassThru
+Set-Location $PSScriptRoot > $null
+Set-Location -Path ../.. -PassThru > $null
 
 # Generate build version with timestamp
 $version = Get-Content .\.version
@@ -32,11 +38,12 @@ foreach ($proj in $projects) {
         -p:IncludeSymbols=false
 }
 
+# Get global NuGet cache path
+$nugetGlobalPath = (dotnet nuget locals global-packages --list) -replace '^global-packages:\s*',''
+
 # If not OnlyPack, copy the packages to the local development feed
 if( $OnlyPack -eq $False )
 {
-    Write-Host "Publishing package to local dev feed: $localFeedPath"
-
     $localFeedPath = $env:LOCAL_DEV_NUGET_FEED_PATH
     if (-not (Test-Path $localFeedPath)) {
         Write-Error "LOCAL_DEV_NUGET_FEED_PATH is not set or does not exist."
@@ -45,16 +52,40 @@ if( $OnlyPack -eq $False )
 
     # Copy .nupkg files to local NuGet feed directory
     $packages = Get-ChildItem -Path ./temp -Filter "*.nupkg"
+
+    # Delete old versions of these packages from LocalDevFeed and Global
     foreach ($pkg in $packages) {
-        Write-Host "publish: $pkg"
+        # packageId is everything before the first version number separator
+        $packageId = $packageId = $pkg.BaseName -replace '\.\d+(\.\d+)*(-[A-Za-z0-9\-\.]+)?$', ''
+        Write-Host "$packageId"
+
+        # find all packages with same prefix in the feed and delete them
+        $oldPackages = Get-ChildItem -Path $localFeedPath -Filter "$packageId*.nupkg"
+        foreach ($old in $oldPackages) {
+            Write-Host "`tRemove from local feed: $old"
+            Remove-Item $old.FullName -Force
+        }
+
+        # Delete package from global cache
+        $pkgCachePath = Join-Path $nugetGlobalPath $packageId
+        Write-Host "`tRemove nuget cache: $pkgCachePath"
+        if (Test-Path $pkgCachePath) {
+            Remove-Item $pkgCachePath -Recurse -Force
+        }
+        Write-Host ""
+    }
+
+    Write-Host "Publishing package to local dev feed: $localFeedPath"
+    foreach ($pkg in $packages) {
+        Write-Host "`t$pkg"
         dotnet nuget add source $localFeedPath -n LocalDev -p -c --store-password-in-clear-text -NonInteractive -Force | Out-Null
-        Copy-Item $pkg.FullName -Destination $localFeedPath
+        Copy-Item $pkg.FullName -Destination $localFeedPath > $null
     }
 
     # Clean up temp folder
-    Remove-Item ./temp -Recurse -Force
+    Remove-Item ./temp -Recurse -Force > $null
 }
 
 # Navigate back to the repository root
-Set-Location $PSScriptRoot
+Set-Location $PSScriptRoot > $null
 

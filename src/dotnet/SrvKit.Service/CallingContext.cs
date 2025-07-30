@@ -7,13 +7,21 @@ using System.Globalization;
 
 namespace ServiceKit.Net
 {
-    public class CallingContext
+    public class CallingContext : ICloneable
     {
+        public enum IdentityTypes
+        {
+            User,
+            Service,
+            Unknown,
+        }
+
         public string CorrelationId { get; internal set; }
         public string CallStack { get; internal set; } = string.Empty;
         public string TenantId { get; internal set; }
         public string IdentityId { get; internal set; }
         public string IdentityName { get; internal set; }
+        public IdentityTypes IdentityType { get; internal set; }
         public Dictionary<string, string> Claims { get; internal set; }
         public ILogger Logger { get; internal set; } = NullLogger.Instance;
 
@@ -59,6 +67,7 @@ namespace ServiceKit.Net
             ctx.TenantId = Get(ServiceConstans.const_tenant_id);
             ctx.IdentityId = Get(ServiceConstans.const_identity_id);
             ctx.IdentityName = Get(ServiceConstans.const_identity_name);
+            ctx.IdentityType = Enum.TryParse<IdentityTypes>(Get(ServiceConstans.const_identity_type), out var identityType) ? identityType : IdentityTypes.Unknown;
             ctx.Logger = logger ?? NullLogger.Instance;
 
             ctx.ClientInfo ??= new ClientInfoData();
@@ -97,7 +106,8 @@ namespace ServiceKit.Net
             ctx.CallStack = Get(ServiceConstans.const_call_stack);
             ctx.TenantId = Get(ServiceConstans.const_tenant_id);
             ctx.IdentityId = Get(ServiceConstans.const_identity_id);
-            ctx.IdentityName = Get(ServiceConstans.const_identity_name); // fallback to header
+            ctx.IdentityName = Get(ServiceConstans.const_identity_name);
+            ctx.IdentityType = Enum.TryParse<IdentityTypes>(Get(ServiceConstans.const_identity_type), out var identityType) ? identityType : IdentityTypes.Unknown;
             ctx.Logger = logger ?? NullLogger.Instance;
 
             ctx.ClientInfo ??= new ClientInfoData();
@@ -151,6 +161,7 @@ namespace ServiceKit.Net
             AddIfNotNullOrEmpty(ServiceConstans.const_tenant_id, TenantId);
             AddIfNotNullOrEmpty(ServiceConstans.const_identity_id, IdentityId);
             AddIfNotNullOrEmpty(ServiceConstans.const_identity_name, IdentityName);
+            AddIfNotNullOrEmpty(ServiceConstans.const_identity_type, IdentityType.ToString());
 
             var newStack = string.IsNullOrWhiteSpace(CallStack)
                 ? serviceName + "." + methodName
@@ -199,6 +210,7 @@ namespace ServiceKit.Net
             Set(ServiceConstans.const_tenant_id, TenantId);
             Set(ServiceConstans.const_identity_id, IdentityId);
             Set(ServiceConstans.const_identity_name, IdentityName);
+            Set(ServiceConstans.const_identity_type, IdentityType.ToString());
 
             var newStack = string.IsNullOrWhiteSpace(CallStack)
                 ? serviceName + "." + methodName
@@ -215,6 +227,33 @@ namespace ServiceKit.Net
             }
 
             // -> Claims NEM kerülnek kiírásra fejlécekbe
+        }
+
+        object ICloneable.Clone() => CloneWithIdentity( IdentityId, IdentityName, IdentityType );
+
+        public CallingContext CloneWithIdentity(string identityId, string identityName, IdentityTypes identityType)
+        {
+            CallingContext clone = new()
+            {
+                CorrelationId = CorrelationId,
+                CallStack = CallStack,
+                TenantId = TenantId,
+                IdentityId = identityId,
+                IdentityName = identityName,
+                IdentityType = identityType,
+                Logger = Logger,
+                ClientInfo = ClientInfo == null
+                    ? null
+                    : new ClientInfoData()
+                    {
+                        ClientLanguage = ClientInfo.ClientLanguage,
+                        ClientApplication = ClientInfo.ClientApplication,
+                        ClientVersion = ClientInfo.ClientVersion,
+                        ClientTimeZoneOffset = ClientInfo.ClientTimeZoneOffset,
+                        ApiClientKitVersion = ClientInfo.ApiClientKitVersion,
+                    }
+            };
+            return clone;
         }
     }
 }
