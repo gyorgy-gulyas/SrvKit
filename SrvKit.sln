@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Solution Files", ".Solutio
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrvKit.Communicators", "src\dotnet\SrvKit.Communicators\SrvKit.Communicators.csproj", "{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,6 +32,10 @@ Global
 		{2465AE76-C8F5-AD0D-3108-5C512F444692}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2465AE76-C8F5-AD0D-3108-5C512F444692}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2465AE76-C8F5-AD0D-3108-5C512F444692}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

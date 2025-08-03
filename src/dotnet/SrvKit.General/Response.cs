@@ -1,3 +1,5 @@
+using Google.Protobuf.WellKnownTypes;
+
 namespace ServiceKit.Net
 {
     public class Response
@@ -15,12 +17,15 @@ namespace ServiceKit.Net
         }
 
         public bool IsSuccess() => Error == null;
+        public bool IsFailed() => Error != null;
         public static Response Success() => new();
+        public static Response<TValue> Success<TValue>( TValue value ) => Response<TValue>.Success( value );
         public static Response Failure(Error error) => new() { Error = error };
+        public Task<Response> AsTask() => Task.FromResult(this);
     }
 
+
     public class Response<TValue> : Response
-        where TValue : class
     {
         public Response(TValue value)
         {
@@ -31,10 +36,10 @@ namespace ServiceKit.Net
         public Response(Error error)
             : base(error)
         {
-            Value = null;
+            Value = default;
         }
 
-        public TValue Value { get; private set; } = null;
+        public TValue Value { get; private set; } = default;
         public bool HasValue() => Value != null;
         public static Response<TValue> Success(TValue value) => new(value);
         public static new Response<TValue> Failure(Error error) => new(error);
