@@ -43,7 +43,6 @@ namespace ServiceKit.Net
         public bool HasValue() => Value != null;
         public static Response<TValue> Success(TValue value) => new(value);
         public static new Response<TValue> Failure(Error error) => new(error);
-
-        public Task<Response<TValue>> AsTask() => Task.FromResult(this);
+        public new Task<Response<TValue>> AsTask() => Task.FromResult(this);
     }
 }
