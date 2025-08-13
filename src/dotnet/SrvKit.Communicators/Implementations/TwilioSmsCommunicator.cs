@@ -1,10 +1,11 @@
 ﻿using ServiceKit.Net;
+using ServiceKit.Net.Communicators;
 using Twilio;
 using Twilio.Exceptions;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
 
-namespace ServiceKit.Net.Communicators
+namespace SrvKit.Communicators.Implementations
 {
     public class TwilioSmsCommunicator : ISmsCommunicator
     {
@@ -12,14 +13,7 @@ namespace ServiceKit.Net.Communicators
         public readonly string _twilioAuthToken = "TWILIO_AUTH_TOKEN";
         public readonly string _twilioFromPhoneNumber = "+1234567890";
 
-        public TwilioSmsCommunicator(string twilioAccountSid, string twilioAuthToken, string twilioFromPhoneNumber)
-        {
-            _twilioAccountSid = twilioAccountSid;
-            _twilioAuthToken = twilioAuthToken;
-            _twilioFromPhoneNumber = twilioFromPhoneNumber;
-        }
-
-        Response ISmsCommunicator.SendSMS(string toPhoneNumber, string messageText)
+        Task<Response> ISmsCommunicator.SendSMS(string toPhoneNumber, string messageText)
         {
             try
             {
@@ -32,7 +26,7 @@ namespace ServiceKit.Net.Communicators
                 );
 
                 Console.WriteLine($"✅ SMS sent (SID: {message.Sid})");
-                return Response.Success();
+                return Response.Success().AsTask();
             }
             catch (ApiException apiEx)
             {
@@ -41,7 +35,7 @@ namespace ServiceKit.Net.Communicators
                     Status = Statuses.BadRequest,
                     MessageText = apiEx.Message,
                     AdditionalInformation = $"❌ Twilio API error: {apiEx.Message} (code: {apiEx.Code})"
-                });
+                }).AsTask();
             }
             catch (Exception ex)
             {
@@ -49,7 +43,7 @@ namespace ServiceKit.Net.Communicators
                 {
                     Status = Statuses.BadRequest,
                     MessageText = ex.Message,
-                });
+                }).AsTask();
             }
         }
     }

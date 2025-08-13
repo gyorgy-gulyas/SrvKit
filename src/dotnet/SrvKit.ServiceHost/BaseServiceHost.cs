@@ -129,7 +129,7 @@ namespace ServiceKit.Net
         private void AddDefaultRootings()
         {
             _app.MapGet("/", () => "Service is running!");
-            _app.MapGet("/rediness", () =>
+            _app.MapGet("/health/ready", () =>
             {
                 if (_ready == false)
                     return Results.StatusCode(500);
@@ -137,7 +137,7 @@ namespace ServiceKit.Net
                 return Results.Ok("ready");
             });
 
-            _app.MapGet("/live", async () =>
+            _app.MapGet("/health/live", async () =>
             {
                 var cpuOverloaded = await _IsCpuOverloadedAsync();
                 var threadBlocked = _IsThreadPoolBlocked();

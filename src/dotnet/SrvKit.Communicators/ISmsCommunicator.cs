@@ -4,6 +4,6 @@ namespace ServiceKit.Net.Communicators
 {
     public interface ISmsCommunicator
     {
-        public Response SendSMS(string toPhoneNumber, string messageText);
+        public Task<Response> SendSMS(string toPhoneNumber, string messageText);
     }
 }
