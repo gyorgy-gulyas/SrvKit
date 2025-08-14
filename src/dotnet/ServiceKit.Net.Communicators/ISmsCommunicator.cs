@@ -1,6 +1,4 @@
-﻿using ServiceKit.Net;
-
-namespace ServiceKit.Net.Communicators
+﻿namespace ServiceKit.Net.Communicators
 {
     public interface ISmsCommunicator
     {

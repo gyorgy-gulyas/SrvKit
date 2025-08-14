@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Protos\**\*.proto" Pack="true" PackagePath="contentFiles\any\any\srvkit" CopyToOutput="true" Visible="true" />
+    <None Include="Protos\**\*.proto" Pack="true" PackagePath="contentFiles\any\any\servicekit" CopyToOutput="true" Visible="true" />
   </ItemGroup>
 
   <ItemGroup>

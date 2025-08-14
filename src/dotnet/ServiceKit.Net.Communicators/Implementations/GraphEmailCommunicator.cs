@@ -1,7 +1,4 @@
-﻿using ServiceKit.Net;
-using ServiceKit.Net.Communicators;
-
-namespace SrvKit.Communicators.Implementations
+﻿namespace ServiceKit.Net.Communicators.Implementations
 {
     public class GraphEmailCommunicator: IEmailCommunicator
     {

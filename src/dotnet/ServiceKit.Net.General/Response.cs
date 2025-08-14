@@ -1,5 +1,3 @@
-using Google.Protobuf.WellKnownTypes;
-
 namespace ServiceKit.Net
 {
     public class Response

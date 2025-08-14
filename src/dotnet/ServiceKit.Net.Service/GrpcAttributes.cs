@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Routing;
 using System.Reflection;
 
-namespace SrvKit.Net
+namespace ServiceKit.Net
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class AutoRegisterGrpcAttribute : Attribute

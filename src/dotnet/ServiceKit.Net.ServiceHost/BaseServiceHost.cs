@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
-using SrvKit.Net;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
 
@@ -14,7 +13,7 @@ namespace ServiceKit.Net
     // Abstract base class for hosting services with common features like REST, gRPC, authentication, and health checks
     public abstract class BaseServiceHost
     {
-        // Options class to toggle optional features like authentication, REST, and gRPC
+        // Options class to toggle optional features like authenltication, REST, and gRPC
         public class Options
         {
             public bool WithAuthentication = true;

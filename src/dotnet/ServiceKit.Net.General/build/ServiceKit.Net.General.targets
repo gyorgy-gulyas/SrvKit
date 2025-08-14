@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <ServiceKitNetProtoRoot>$(MSBuildThisFileDirectory)..\contentFiles\any\any\</ServiceKitNetProtoRoot>
+  </PropertyGroup>
+</Project>

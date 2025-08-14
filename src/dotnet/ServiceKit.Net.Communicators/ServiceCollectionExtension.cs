@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using ServiceKit.Net.Communicators;
-using SrvKit.Communicators.Implementations;
+using ServiceKit.Net.Communicators.Implementations;
 
-namespace SrvKit.Communicators
+namespace ServiceKit.Net.Communicators
 {
     public static class ServiceCollectionExtension
     {

@@ -1,11 +1,9 @@
-﻿using ServiceKit.Net;
-using ServiceKit.Net.Communicators;
-using Twilio;
+﻿using Twilio;
 using Twilio.Exceptions;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
 
-namespace SrvKit.Communicators.Implementations
+namespace ServiceKit.Net.Communicators.Implementations
 {
     public class TwilioSmsCommunicator : ISmsCommunicator
     {
