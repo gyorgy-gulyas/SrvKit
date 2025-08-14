@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35219.272
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Solution Files", ".Solution Files", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		.version = .version
+		Directory.Build.props = Directory.Build.props
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceKit.Service", "src\dotnet\ServiceKit.Net.Service\ServiceKit.Net.Service.csproj", "{F10AA597-E674-4673-5CD8-5B60164CC649}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceKit.General", "src\dotnet\ServiceKit.Net.General\ServiceKit.Net.General.csproj", "{2465AE76-C8F5-AD0D-3108-5C512F444692}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceKit.Communicators", "src\dotnet\ServiceKit.Net.Communicators\ServiceKit.Net.Communicators.csproj", "{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceKit.ServiceHost", "src\dotnet\ServiceKit.Net.ServiceHost\ServiceKit.Net.ServiceHost.csproj", "{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F10AA597-E674-4673-5CD8-5B60164CC649}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F10AA597-E674-4673-5CD8-5B60164CC649}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F10AA597-E674-4673-5CD8-5B60164CC649}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F10AA597-E674-4673-5CD8-5B60164CC649}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2465AE76-C8F5-AD0D-3108-5C512F444692}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2465AE76-C8F5-AD0D-3108-5C512F444692}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2465AE76-C8F5-AD0D-3108-5C512F444692}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2465AE76-C8F5-AD0D-3108-5C512F444692}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BC4D4E6-1D4D-D6FF-1A5C-5388DD5FC712}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9D8E0F2B-CDE3-4F35-8314-F1BC4149CCF8}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <SrvKitProtoRoot>$(MSBuildThisFileDirectory)..\contentFiles\any\any\</SrvKitProtoRoot>
+  </PropertyGroup>
+</Project>

@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SrvKit.General\SrvKit.General.csproj" />
-    <ProjectReference Include="..\SrvKit.Service\SrvKit.Service.csproj" />
+    <ProjectReference Include="..\ServiceKit.Net.General\ServiceKit.Net.General.csproj" />
+    <ProjectReference Include="..\ServiceKit.Net.Service\ServiceKit.Net.Service.csproj" />
   </ItemGroup>
 
 

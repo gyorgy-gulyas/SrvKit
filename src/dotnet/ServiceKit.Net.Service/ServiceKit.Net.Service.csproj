@@ -6,11 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Twilio" Version="7.12.0" />
+    <ProjectReference Include="..\ServiceKit.Net.General\ServiceKit.Net.General.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SrvKit.General\SrvKit.General.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0" />
   </ItemGroup>
 
 </Project>
