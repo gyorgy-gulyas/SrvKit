@@ -1,12 +1,12 @@
-using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
-using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 
 namespace ServiceKit.Net
 {
@@ -20,6 +20,7 @@ namespace ServiceKit.Net
             public bool WithGrpc = true;
             public bool WithRest = true;
             public bool WithReponseCompression = true;
+            public string PathBase = default(string);
         }
 
         protected WebApplicationBuilder _builder;
@@ -102,6 +103,12 @@ namespace ServiceKit.Net
             {
                 _app.UseSwagger();
                 _app.UseSwaggerUI();
+            }
+
+
+            if (string.IsNullOrEmpty(options.PathBase) == false)
+            {
+                _app.UsePathBase(options.PathBase);
             }
 
             if (options.WithAuthentication)

@@ -22,7 +22,7 @@ namespace ServiceKit.Net
         public string IdentityId { get; internal set; }
         public string IdentityName { get; internal set; }
         public IdentityTypes IdentityType { get; internal set; }
-        public Dictionary<string, string> Claims { get; internal set; }
+        public Dictionary<string, string> Claims { get; internal set; } = [];
         public ILogger Logger { get; internal set; } = NullLogger.Instance;
 
         public class ClientInfoData
