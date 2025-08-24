@@ -1,12 +1,15 @@
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 
 namespace ServiceKit.Net
 {
@@ -36,8 +39,14 @@ namespace ServiceKit.Net
                 options = new Options();
 
             service.AddServices(args, options);
-            return service.Build(options);
+            var host = service.Build(options);
+
+            service._BeforeRun(host,options).Wait();
+
+            return host;
         }
+
+        protected abstract Task _BeforeRun(WebApplication app, Options options);
 
         // Register required services into the DI container based on the selected options
         private void AddServices(string[] args, Options options)
@@ -53,7 +62,9 @@ namespace ServiceKit.Net
             }
 
             if (options.WithRest)
-                _builder.Services.AddControllers();
+                _builder.Services.AddControllers()
+                    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
 
             if (options.WithGrpc)
                 _builder.Services.AddGrpc();
@@ -95,7 +106,7 @@ namespace ServiceKit.Net
             // Add health endpoints like "/" and "/live" and "/rediness"
             AddDefaultRootings();
 
-            _BeforeBuild(_builder.Services, options);
+            _BeforeBuild(_app, options);
 
             _app.UseCors("cors_policy");
 
@@ -121,15 +132,15 @@ namespace ServiceKit.Net
             _app.MapControllers();
             _app.MapGrpcControllers();
 
-            _AfterBuild(_builder.Services, options);
+            _AfterBuild(_app, options);
 
             _ready = true;
             return _app;
         }
 
         // Abstract hooks to let subclasses hook into build process
-        protected abstract void _BeforeBuild(IServiceCollection services, Options options);
-        protected abstract void _AfterBuild(IServiceCollection services, Options options);
+        protected abstract void _BeforeBuild(WebApplication app, Options options);
+        protected abstract void _AfterBuild(WebApplication app, Options options);
 
         // Define default root endpoints: "/" and "/live"
         private void AddDefaultRootings()
