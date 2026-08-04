@@ -20,6 +20,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceKit.Communicators", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceKit.ServiceHost", "src\dotnet\ServiceKit.Net.ServiceHost\ServiceKit.Net.ServiceHost.csproj", "{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceKit.Workflow", "src\dotnet\ServiceKit.Net.Workflow\ServiceKit.Net.Workflow.csproj", "{75037A98-F60D-4348-B41A-1EA83D28E173}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceKit.Workflow.Tests", "tests\dotnet\ServiceKit.Net.Workflow.Tests\ServiceKit.Net.Workflow.Tests.csproj", "{1C22ED7D-645D-4065-BDBA-EACE38173735}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,6 +46,14 @@ Global
 		{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC7674B0-53F7-4D8D-90AB-46DD361B67D2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75037A98-F60D-4348-B41A-1EA83D28E173}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75037A98-F60D-4348-B41A-1EA83D28E173}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75037A98-F60D-4348-B41A-1EA83D28E173}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75037A98-F60D-4348-B41A-1EA83D28E173}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C22ED7D-645D-4065-BDBA-EACE38173735}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C22ED7D-645D-4065-BDBA-EACE38173735}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C22ED7D-645D-4065-BDBA-EACE38173735}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C22ED7D-645D-4065-BDBA-EACE38173735}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
