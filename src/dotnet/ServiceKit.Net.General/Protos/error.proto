@@ -35,7 +35,10 @@ enum Statuses {
 }
 
 message Error {
-    Statuses Status = 1;
+    /// Which field the error is about, in the caller's own terms: "items[1].quantity".
+    /// Empty when the error is not about a field. This is what lets a UI mark the right
+    /// control instead of only showing a sentence.
+    string Path = 1;
     string MessageText = 2;
     string AdditionalInformation = 3;
 }

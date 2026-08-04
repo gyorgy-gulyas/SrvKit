@@ -52,12 +52,10 @@ namespace ServiceKit.Net.Communicators.Implementations
         {
             if (_isConfigured == false)
             {
-                return Response.Failure(new Error()
-                {
-                    Status = Statuses.InternalError,
-                    MessageText = "The SMS channel is not configured",
-                    AdditionalInformation = $"Set {AccountSidKey}, {AuthTokenKey} and {FromPhoneNumberKey} in configuration.",
-                }).AsTask();
+                return Response.Failure(
+                    Statuses.InternalError,
+                    "The SMS channel is not configured",
+                    $"Set {AccountSidKey}, {AuthTokenKey} and {FromPhoneNumberKey} in configuration.").AsTask();
             }
 
             try
@@ -77,21 +75,15 @@ namespace ServiceKit.Net.Communicators.Implementations
             {
                 // Twilio reports an HTTP status, so a bad number and an expired token no longer look
                 // the same to the caller - the house mapping turns it into the right one.
-                return Response.Failure(new Error()
-                {
-                    Status = ((HttpStatusCode)apiEx.Status).FromHttp(),
-                    MessageText = apiEx.Message,
-                    AdditionalInformation = $"Twilio API error {apiEx.Code}",
-                }).AsTask();
+                return Response.Failure(
+                    ((HttpStatusCode)apiEx.Status).FromHttp(),
+                    apiEx.Message,
+                    $"Twilio API error {apiEx.Code}").AsTask();
             }
             catch (Exception ex)
             {
                 _logger?.LogError(ex, "Sending an SMS failed");
-                return Response.Failure(new Error()
-                {
-                    Status = Statuses.InternalError,
-                    MessageText = ex.Message,
-                }).AsTask();
+                return Response.Failure(Statuses.InternalError, ex.Message).AsTask();
             }
         }
     }
