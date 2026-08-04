@@ -10,20 +10,28 @@ option java_multiple_files = true;
 
 
 enum Statuses {
-    /// gRPC: Ok(0), Http: 200 (Ok)
+    /// gRPC: OK (0), Http: 200 (Ok)
     Ok = 0;
-    /// gRPC: INVALID_ARGUMENT(3), Http: 400 (BadRequest)
+    /// gRPC: INVALID_ARGUMENT (3), Http: 400 (Bad Request)
     BadRequest = 1;
-    /// gRPC: DEADLINE_EXCEEDED (4), Http: 504 (Gateway Timeout)
+    /// gRPC: DEADLINE_EXCEEDED (4), Http: 504 (Gateway Timeout). Retryable.
     Timeout = 2;
-    /// gRPC: NOT_FOUND (5), Http: 404 (404 Not Found)
+    /// gRPC: NOT_FOUND (5), Http: 404 (Not Found)
     NotFound = 3;
-    /// gRPC: UNAUTHENTICATED (16), Http: 401 (Unauthorized)
+    /// Not authenticated - who are you? gRPC: UNAUTHENTICATED (16), Http: 401 (Unauthorized)
     Unauthorized = 4;
     /// gRPC: UNIMPLEMENTED (12), Http: 501 (Not Implemented)
     NotImplemented = 5;
     /// gRPC: INTERNAL (13), Http: 500 (Internal Server Error)
     InternalError = 6;
+    /// Authenticated, but not allowed - a different answer from Unauthorized, because retrying
+    /// with a fresh token helps in one case and never in the other.
+    /// gRPC: PERMISSION_DENIED (7), Http: 403 (Forbidden)
+    Forbidden = 7;
+    /// gRPC: RESOURCE_EXHAUSTED (8), Http: 429 (Too Many Requests). Retryable.
+    TooManyRequests = 8;
+    /// gRPC: UNAVAILABLE (14), Http: 503 (Service Unavailable). Retryable.
+    Unavailable = 9;
 }
 
 message Error {

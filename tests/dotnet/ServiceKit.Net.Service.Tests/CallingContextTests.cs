@@ -1,8 +1,23 @@
 using Microsoft.AspNetCore.Http;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 
 namespace ServiceKit.Net.Tests
 {
+    [TestClass]
+    public class GrpcRegistrationTests
+    {
+        [TestMethod]
+        public void The_grpc_mapping_method_is_still_found_exactly_once()
+        {
+            // MapGrpcControllers reaches MapGrpcService by reflection, resolved in a static field
+            // with Single(). If Grpc.AspNetCore ever adds another single-argument generic overload
+            // the lookup becomes ambiguous - and this test is what says so, instead of the host
+            // picking one at random at startup.
+            RuntimeHelpers.RunClassConstructor(typeof(RegistrationExtensions).TypeHandle);
+        }
+    }
+
     [TestClass]
     public class CallingContextTests
     {

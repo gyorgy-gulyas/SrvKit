@@ -6,9 +6,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using System.IO.Compression;
-using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 
 namespace ServiceKit.Net
@@ -140,10 +138,12 @@ namespace ServiceKit.Net
         protected abstract void _BeforeBuild(WebApplication app, Options options);
         protected abstract void _AfterBuild(WebApplication app, Options options);
 
-        // Define default root endpoints: "/" and "/live"
+        // Define default root endpoints: "/" and the two health probes
         private void AddDefaultRootings()
         {
             _app.MapGet("/", () => "Service is running!");
+
+            // Readiness answers "should traffic come here", so it may say no and be routed around.
             _app.MapGet("/health/ready", () =>
             {
                 if (_ready == false)
@@ -152,92 +152,19 @@ namespace ServiceKit.Net
                 return Results.Ok("ready");
             });
 
-            _app.MapGet("/health/live", async () =>
-            {
-                var cpuOverloaded = await _IsCpuOverloadedAsync();
-                var threadBlocked = _IsThreadPoolBlocked();
-
-                // If the system is overloaded or thread pool is blocked, return HTTP 500
-                if (cpuOverloaded || threadBlocked)
-                {
-                    return Results.StatusCode(500);
-                }
-
-                return Results.Ok("alive");
-            });
-        }
-
-        // Determine if the CPU usage is above a certain threshold
-        private static async Task<bool> _IsCpuOverloadedAsync()
-        {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return await _GetCpuUsageWindowsAsync() > 90;
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return await _GetCpuUsageLinuxAsync() > 90;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        // Windows-specific method to measure CPU usage via PerformanceCounter
-        private static async Task<double> _GetCpuUsageWindowsAsync()
-        {
-            if (OperatingSystem.IsWindows())
-            {
-                using var cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
-                _ = cpuCounter.NextValue(); // Initial dummy read
-                await Task.Delay(500); // Wait to get a valid sample
-                return cpuCounter.NextValue();
-            }
-            else
-            {
-                return 0.0;
-            }
-        }
-
-        // Linux-specific method to calculate CPU usage from /proc/stat
-        private static async Task<double> _GetCpuUsageLinuxAsync()
-        {
-            var stat1 = await File.ReadAllLinesAsync("/proc/stat");
-            var idle1 = _ParseIdle(stat1[0], out var total1);
-
-            await Task.Delay(500);
-
-            var stat2 = await File.ReadAllLinesAsync("/proc/stat");
-            var idle2 = _ParseIdle(stat2[0], out var total2);
-
-            var idleDelta = idle2 - idle1;
-            var totalDelta = total2 - total1;
-
-            var usage = 100.0 * (1.0 - ((double)idleDelta / totalDelta));
-            return usage;
-
-            // Helper function to extract idle and total time from /proc/stat
-            long _ParseIdle(string line, out long total)
-            {
-                var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries).Skip(1).Select(long.Parse).ToArray();
-                var idle = parts[3]; // idle is at index 3
-                total = parts.Sum();
-                return idle;
-            }
-        }
-
-        // Check if the .NET thread pool is saturated
-        private static bool _IsThreadPoolBlocked()
-        {
-            ThreadPool.GetAvailableThreads(out int availableWorkerThreads, out _);
-            ThreadPool.GetMaxThreads(out int maxWorkerThreads, out _);
-
-            var usedThreads = maxWorkerThreads - availableWorkerThreads;
-            var usagePercent = (double)usedThreads / maxWorkerThreads * 100;
-
-            // Return true if thread pool usage is above 90%
-            return usagePercent > 90;
+            // Liveness answers "is this process still alive", and NOTHING else.
+            //
+            // It used to sample CPU usage and fail over 90%. Load is not liveness: under load the
+            // probe failed, the orchestrator killed the pod, its traffic moved to the remaining
+            // pods, and those went over the threshold too - a busy service was turned into an
+            // outage by its own health check. The sampling also blocked for half a second per
+            // probe, so the check itself added to the load it was measuring.
+            //
+            // Answering at all is the evidence that matters: a process that can serve this has a
+            // working thread pool and a working request pipeline. A restart is the only thing an
+            // orchestrator can do about a failed liveness probe, and a restart does not fix load.
+            // Load belongs in metrics, and shedding it belongs in readiness or in autoscaling.
+            _app.MapGet("/health/live", () => Results.Ok("alive"));
         }
 
         // The allowed browser origins come from configuration - "Cors:AllowedOrigins", an array, or
