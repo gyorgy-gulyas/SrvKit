@@ -2,7 +2,6 @@ using Grpc.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.ObjectPool;
 using System.Globalization;
 
 namespace ServiceKit.Net
@@ -35,11 +34,25 @@ namespace ServiceKit.Net
         }
         public ClientInfoData ClientInfo { get; internal set; }
 
-        private static readonly ObjectPool<CallingContext> _pool = new DefaultObjectPool<CallingContext>(new DefaultPooledObjectPolicy<CallingContext>());
+        // There is deliberately no object pool here any more.
+        //
+        // A calling context does not end with the request that created it: a service may hand it to
+        // background work - the audit trail keeps a reference and reads the identity off it when the
+        // entry is finally written. Returning the instance at the end of the action therefore handed
+        // a live object back to the pool, and the next request could overwrite the identity out from
+        // under the pending audit entry. Recycling one small per-request object was never worth that.
 
+        // Superseded by FromGrpcContext; kept so generated code from before the pool was removed
+        // still compiles unchanged. Not marked obsolete on purpose - that would bury every consumer
+        // in warnings for code they do not hand-write.
         public static CallingContext PoolFromGrpcContext(ServerCallContext @this, ILogger logger = null)
         {
-            var ctx = _pool.Get();
+            return FromGrpcContext(@this, logger);
+        }
+
+        public static CallingContext FromGrpcContext(ServerCallContext @this, ILogger logger = null)
+        {
+            var ctx = new CallingContext();
             var metadata = @this.RequestHeaders;
 
             var metaMap = new Dictionary<string, string>(metadata.Count, StringComparer.OrdinalIgnoreCase);
@@ -80,9 +93,15 @@ namespace ServiceKit.Net
             return ctx;
         }
 
+        // Superseded by FromHttpContext; see the note on PoolFromGrpcContext.
         public static CallingContext PoolFromHttpContext(HttpContext @this, ILogger logger = null)
         {
-            var ctx = _pool.Get();
+            return FromHttpContext(@this, logger);
+        }
+
+        public static CallingContext FromHttpContext(HttpContext @this, ILogger logger = null)
+        {
+            var ctx = new CallingContext();
             var headers = @this.Request.Headers;
             var user = @this.User;
 
@@ -120,25 +139,12 @@ namespace ServiceKit.Net
             return ctx;
         }
 
+        // A no-op since the pool was removed. It must NOT clear the context either: generated
+        // controllers call this in a finally block, while background work started by the request -
+        // the audit trail, for one - still holds this instance and reads the identity off it later.
+        // Kept so that generated code from before the change still compiles.
         public void ReturnToPool()
         {
-            Claims.Clear();
-            CorrelationId = string.Empty;
-            CallStack = string.Empty;
-            TenantId = string.Empty;
-            IdentityId = string.Empty;
-            IdentityName = string.Empty;
-            if (ClientInfo != null)
-            {
-                ClientInfo.ClientLanguage = null;
-                ClientInfo.ClientApplication = null;
-                ClientInfo.ClientVersion = null;
-                ClientInfo.ClientTimeZoneOffset = 0;
-                ClientInfo.ApiClientKitVersion = 0;
-            }
-
-            Logger = NullLogger.Instance;
-            _pool.Return(this);
         }
 
         public Metadata ToGrpcMetadata(string serviceName, string methodName)

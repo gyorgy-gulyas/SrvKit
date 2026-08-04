@@ -79,17 +79,7 @@ namespace ServiceKit.Net
                 _builder.Services.AddSwaggerGen();
             }
 
-            // Configure CORS policy
-            _builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("cors_policy", policy =>
-                {
-                    policy
-                        .AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader();
-                });
-            });
+            _ConfigureCors(_builder.Services);
 
             _AfterAddServices(_builder.Services, options);
         }
@@ -128,8 +118,16 @@ namespace ServiceKit.Net
                 _app.UseAuthorization();
             }
 
-            // Register REST and gRPC endpoints
-            _app.MapControllers();
+            // Register REST and gRPC endpoints.
+            // With authentication on, the REST controllers are mapped behind RequireAuthorization -
+            // a controller that really is public says so with [AllowAnonymous]. Requiring it while
+            // no authentication scheme is registered would only fail every request, so a host that
+            // opted out of authentication keeps the bare mapping.
+            if (options.WithAuthentication)
+                _app.MapRestControllers();
+            else
+                _app.MapControllers();
+
             _app.MapGrpcControllers();
 
             _AfterBuild(_app, options);
@@ -240,6 +238,46 @@ namespace ServiceKit.Net
 
             // Return true if thread pool usage is above 90%
             return usagePercent > 90;
+        }
+
+        // The allowed browser origins come from configuration - "Cors:AllowedOrigins", an array, or
+        // the Cors__AllowedOrigins__0 style environment variables in the cluster.
+        //
+        // Configured origins are the good case: the policy is limited to them and may therefore also
+        // carry credentials, which a wildcard never can. Left unconfigured, a development host stays
+        // wide open for convenience, but anywhere else the policy allows no cross-origin request at
+        // all - a browser error that is easy to read beats a service that quietly accepts everyone.
+        private void _ConfigureCors(IServiceCollection services)
+        {
+            var allowedOrigins = _builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .GetChildren()
+                .Select(child => child.Value)
+                .Where(origin => string.IsNullOrWhiteSpace(origin) == false)
+                .ToArray();
+            var isDevelopment = _builder.Environment.IsDevelopment();
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("cors_policy", policy =>
+                {
+                    if (allowedOrigins != null && allowedOrigins.Length > 0)
+                    {
+                        policy
+                            .WithOrigins(allowedOrigins)
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .AllowCredentials();
+                    }
+                    else if (isDevelopment == true)
+                    {
+                        policy
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                    }
+                });
+            });
         }
 
         private static void _ConfigureCompression( IServiceCollection services )
