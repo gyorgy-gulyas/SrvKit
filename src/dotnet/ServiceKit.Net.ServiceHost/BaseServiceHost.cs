@@ -28,6 +28,9 @@ namespace ServiceKit.Net
             // configured the spans are created, never exported, and their trace id is what ties a
             // log line to the call it belongs to.
             public bool WithTracing = true;
+            // Metrics likewise: the host serves its own scrape endpoint, so there is nothing to
+            // install for a service to be measurable.
+            public bool WithMetrics = true;
             public string PathBase = default(string);
         }
 
@@ -63,6 +66,9 @@ namespace ServiceKit.Net
 
             if (options.WithTracing)
                 _builder.AddServiceKitTracing();
+
+            if (options.WithMetrics)
+                _builder.AddServiceKitMetrics();
 
             _BeforeAddServices(_builder.Services, options);
 
@@ -143,6 +149,12 @@ namespace ServiceKit.Net
             // a controller that really is public says so with [AllowAnonymous]. Requiring it while
             // no authentication scheme is registered would only fail every request, so a host that
             // opted out of authentication keeps the bare mapping.
+            // Mapped before the controllers and deliberately outside the authentication above: a
+            // scraper is not a user, and a /metrics that needs a bearer token is a /metrics nobody
+            // scrapes. Keep it off the public ingress instead.
+            if (options.WithMetrics)
+                _app.UseServiceKitMetrics();
+
             if (options.WithAuthentication)
                 _app.MapRestControllers();
             else

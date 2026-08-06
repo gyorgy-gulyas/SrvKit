@@ -1,22 +1,30 @@
 using System.Diagnostics;
+using System.Diagnostics.Metrics;
 
 namespace ServiceKit.Net
 {
     /// <summary>
-    /// The platform's own tracing handles.
+    /// The platform's own tracing and metric handles.
     ///
-    /// A service that wants a span of its own starts it from <see cref="ActivitySource"/>; the host
-    /// registers that same name with OpenTelemetry, so anything started here is exported without the
-    /// service having to know how. When no tracer is listening an ActivitySource returns null and
-    /// costs nothing, which is why calling it unconditionally is fine.
+    /// A service that wants a span or a counter of its own takes it from here; the host registers
+    /// these same names with OpenTelemetry, so anything created here is exported without the service
+    /// having to know how. When nothing is listening an ActivitySource returns null and an
+    /// instrument records into nowhere, which is why calling them unconditionally is fine.
     /// </summary>
     public static class ServiceKitDiagnostics
     {
         public const string ActivitySourceName = "ServiceKit.Net";
+        public const string MeterName = "ServiceKit.Net";
 
-        public static readonly ActivitySource ActivitySource = new ActivitySource(
-            ActivitySourceName,
-            typeof(ServiceKitDiagnostics).Assembly.GetName().Version?.ToString());
+        private static readonly string _version = typeof(ServiceKitDiagnostics).Assembly.GetName().Version?.ToString();
+
+        public static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName, _version);
+
+        /// <summary>
+        /// Where a service's own counters and histograms belong. Instruments are created once and
+        /// kept - a Meter is not something to build per request.
+        /// </summary>
+        public static readonly Meter Meter = new Meter(MeterName, _version);
 
         // The call's identity, put on the span so a trace can be searched by the same things the
         // logs are searched by. Prefixed because a tag name is a global namespace shared with every

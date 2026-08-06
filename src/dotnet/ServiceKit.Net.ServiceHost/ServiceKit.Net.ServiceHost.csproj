@@ -24,6 +24,12 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.17.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.17.0" />
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.17.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.17.0" />
+    <!-- Pre-release because upstream has never shipped anything else: the Prometheus exporter has
+         been beta for years and is what everyone scrapes in production. Pinned rather than floating,
+         and the whole thing is switchable off (Options.WithMetrics) for a host that would rather
+         export over OTLP only. -->
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.17.0-beta.1" />
   </ItemGroup>
 
   <ItemGroup>

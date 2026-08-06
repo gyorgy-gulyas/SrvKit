@@ -122,9 +122,9 @@ namespace ServiceKit.Net
             {
                 options.GetLevel = (httpContext, elapsed, exception) =>
                 {
-                    // the health probes are called every few seconds by the orchestrator and would
-                    // otherwise drown out everything a person wants to read
-                    if (httpContext.Request.Path.StartsWithSegments("/health") == true)
+                    // the probes and the metric scrapes arrive every few seconds and would otherwise
+                    // drown out everything a person wants to read
+                    if (ObservabilityResource.IsBackgroundPath(httpContext.Request.Path) == true)
                         return LogEventLevel.Verbose;
 
                     if (exception != null || httpContext.Response.StatusCode >= 500)

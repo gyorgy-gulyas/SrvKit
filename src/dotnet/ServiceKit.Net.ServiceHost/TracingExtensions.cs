@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace ServiceKit.Net
@@ -34,16 +32,10 @@ namespace ServiceKit.Net
             if (string.IsNullOrWhiteSpace(endpoint) == true)
                 endpoint = builder.Configuration[EnvironmentVariable];
 
+            ObservabilityResource.Configure(builder);
+
             builder.Services
                 .AddOpenTelemetry()
-                .ConfigureResource(resource => resource
-                    .AddService(
-                        serviceName: builder.Environment.ApplicationName,
-                        serviceInstanceId: Environment.MachineName)
-                    .AddAttributes(new[]
-                    {
-                        new KeyValuePair<string, object>("deployment.environment", builder.Environment.EnvironmentName),
-                    }))
                 .WithTracing(tracing =>
                 {
                     tracing
@@ -52,9 +44,9 @@ namespace ServiceKit.Net
                         // incoming REST and gRPC: both arrive through ASP.NET Core
                         .AddAspNetCoreInstrumentation(options =>
                         {
-                            // the orchestrator calls these every few seconds and they are not
-                            // traffic anybody wants to look at
-                            options.Filter = context => context.Request.Path.StartsWithSegments("/health") == false;
+                            // the orchestrator and the scraper call these every few seconds and they
+                            // are not traffic anybody wants to look at
+                            options.Filter = context => ObservabilityResource.IsBackgroundPath(context.Request.Path) == false;
                         })
                         // outgoing calls, which is what makes the trace span more than one service.
                         // The generated gRPC clients are covered by this too - a gRPC call is an

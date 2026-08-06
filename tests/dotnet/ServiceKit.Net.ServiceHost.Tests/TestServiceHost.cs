@@ -46,6 +46,11 @@ namespace ServiceKit.Net.Tests
         // exporter off the very provider the host configured rather than building a second one.
         public static readonly List<Activity> Spans = new List<Activity>();
 
+        // An instrument is created once and kept; building one per request would create a new time
+        // series every time.
+        private static readonly System.Diagnostics.Metrics.Counter<long> _thingsCounted =
+            ServiceKitDiagnostics.Meter.CreateCounter<long>("things_counted");
+
         protected override void _BeforeAddServices(IServiceCollection services, Options options)
         {
             services.AddSingleton<ILogEventSink>(Sink);
@@ -70,6 +75,16 @@ namespace ServiceKit.Net.Tests
                 logger.LogInformation("something happened");
                 return Results.Ok("said");
             });
+
+            // a service counting something of its own, through the platform's Meter
+            app.MapGet("/count-something", () =>
+            {
+                _thingsCounted.Add(1);
+                return Results.Ok("counted");
+            });
+
+            // something that fails, so the status code shows up as a dimension
+            app.MapGet("/blow-up", () => Results.StatusCode(500));
 
             // a service starting a span of its own, through the platform's ActivitySource
             app.MapGet("/do-some-work", () =>
