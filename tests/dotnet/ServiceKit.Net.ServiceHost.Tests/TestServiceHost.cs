@@ -104,9 +104,17 @@ namespace ServiceKit.Net.Tests
             });
         }
 
-        protected override Task _BeforeRun(WebApplication app, Options options)
+        // Set to make _BeforeRun throw, so a test can watch what a failed startup reports.
+        public static Exception BeforeRunThrows;
+
+        // Yields on purpose: the point of CreateAsync is that a hook which really suspends is
+        // awaited rather than blocked on.
+        protected override async Task _BeforeRun(WebApplication app, Options options)
         {
-            return Task.CompletedTask;
+            await Task.Yield();
+
+            if (BeforeRunThrows != null)
+                throw BeforeRunThrows;
         }
 
         private static int _FreePort()

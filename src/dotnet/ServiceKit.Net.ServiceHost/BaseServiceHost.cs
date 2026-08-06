@@ -38,8 +38,10 @@ namespace ServiceKit.Net
         protected WebApplication _app;
         protected bool _ready = false;
 
-        // Static factory method to create and configure the service
-        public static IHost Create<TService>(string[] args, Options options) where TService : BaseServiceHost, new()
+        // Build and configure the service. Prefer this over Create: _BeforeRun is the hook where a
+        // host does its own asynchronous startup work - a migration, a warm-up, a first fetch - and
+        // this is the only version that awaits it properly.
+        public static async Task<IHost> CreateAsync<TService>(string[] args, Options options) where TService : BaseServiceHost, new()
         {
             var service = new TService();
 
@@ -49,9 +51,20 @@ namespace ServiceKit.Net
             service.AddServices(args, options);
             var host = service.Build(options);
 
-            service._BeforeRun(host,options).Wait();
+            await service._BeforeRun(host, options).ConfigureAwait(false);
 
             return host;
+        }
+
+        // The synchronous entry point, kept because a Program.cs written against it should not have
+        // to change.
+        //
+        // GetAwaiter().GetResult() rather than Wait(): Wait() wraps whatever _BeforeRun threw in an
+        // AggregateException, so a host that failed to start reported a wrapper instead of the
+        // reason, and the stack trace pointed here instead of at the code that broke.
+        public static IHost Create<TService>(string[] args, Options options) where TService : BaseServiceHost, new()
+        {
+            return CreateAsync<TService>(args, options).GetAwaiter().GetResult();
         }
 
         protected abstract Task _BeforeRun(WebApplication app, Options options);
