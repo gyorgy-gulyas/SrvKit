@@ -178,5 +178,46 @@ namespace ServiceKit.Net.Tests
             // the original must not move with it
             Assert.AreEqual("user-1", ctx.IdentityId);
         }
+
+        [TestMethod]
+        public void A_context_nobody_filled_in_is_not_a_user()
+        {
+            // IdentityTypes.User is the first value of the enum, so an unfilled context used to
+            // claim to be one - which is the one answer an authorization check must never be given
+            // for free.
+            Assert.AreEqual(CallingContext.IdentityTypes.Unknown, new CallingContext().IdentityType);
+        }
+
+        [TestMethod]
+        public void A_claim_is_found_by_the_name_it_was_sent_under_whatever_its_case()
+        {
+            // gRPC lowercases metadata keys and HTTP claim types keep their case, so the same claim
+            // used to be found over one transport and missed over the other.
+            var http = new DefaultHttpContext();
+            http.Request.Headers[ServiceConstans.const_identity_id] = "user-1";
+            http.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("Role", "admin") }, "test"));
+
+            var ctx = CallingContext.FromHttpContext(http);
+
+            Assert.AreEqual("admin", ctx.Claims["role"]);
+            Assert.AreEqual("admin", ctx.Claims["ROLE"]);
+        }
+
+        [TestMethod]
+        public void A_clone_carries_the_claims_and_does_not_share_them()
+        {
+            // The clone is how a service acts on someone's behalf. Dropping the claims there drops
+            // the authorization context exactly where it matters most.
+            var http = new DefaultHttpContext();
+            http.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("role", "admin") }, "test"));
+            var ctx = CallingContext.FromHttpContext(http);
+
+            var clone = ctx.CloneWithIdentity("service-1", "OrderService", CallingContext.IdentityTypes.Service);
+
+            Assert.AreEqual("admin", clone.Claims["role"]);
+
+            clone.Claims["role"] = "nobody";
+            Assert.AreEqual("admin", ctx.Claims["role"], "the clone must not reach back into the request that spawned it");
+        }
     }
 }

@@ -20,8 +20,15 @@ namespace ServiceKit.Net
         public string TenantId { get; internal set; }
         public string IdentityId { get; internal set; }
         public string IdentityName { get; internal set; }
-        public IdentityTypes IdentityType { get; internal set; }
-        public Dictionary<string, string> Claims { get; internal set; } = [];
+        // Unknown rather than the first enum value. A context nobody filled in used to read as
+        // IdentityTypes.User, which is the one answer an authorization check must never be given for
+        // free.
+        public IdentityTypes IdentityType { get; internal set; } = IdentityTypes.Unknown;
+
+        // Case insensitive on purpose: the same claim used to resolve differently depending on the
+        // transport it arrived over, because gRPC metadata keys are lowercased by the protocol and
+        // HTTP claim types are not.
+        public Dictionary<string, string> Claims { get; internal set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public ILogger Logger { get; internal set; } = NullLogger.Instance;
 
         public class ClientInfoData
@@ -68,7 +75,7 @@ namespace ServiceKit.Net
             int GetInt(string key) =>
                 int.TryParse(Get(key), out var result) ? result : 0;
 
-            ctx.Claims = new Dictionary<string, string>(metaMap.Count);
+            ctx.Claims = new Dictionary<string, string>(metaMap.Count, StringComparer.OrdinalIgnoreCase);
             foreach (var kv in metaMap)
             {
                 if (kv.Key.StartsWith(ServiceConstans.const_claim))
@@ -112,7 +119,7 @@ namespace ServiceKit.Net
                 int.TryParse(Get(key), out var result) ? result : 0;
 
             // Claims most már a felhasználói identity-ből jön
-            ctx.Claims = new Dictionary<string, string>();
+            ctx.Claims = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (user?.Identity?.IsAuthenticated == true)
             {
                 foreach (var claim in user.Claims)
@@ -248,6 +255,9 @@ namespace ServiceKit.Net
                 IdentityName = identityName,
                 IdentityType = identityType,
                 Logger = Logger,
+                // Copied, not shared: a clone is usually made for background work, and background
+                // work that mutated this would be reaching into the request that spawned it.
+                Claims = new Dictionary<string, string>(Claims ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase),
                 ClientInfo = ClientInfo == null
                     ? null
                     : new ClientInfoData()
