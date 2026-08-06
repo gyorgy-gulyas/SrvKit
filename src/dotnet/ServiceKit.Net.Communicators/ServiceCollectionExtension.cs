@@ -26,6 +26,43 @@ namespace ServiceKit.Net.Communicators
         /// <summary>
         /// E-mail through Microsoft Graph, on behalf of a mailbox in the tenant.
         /// </summary>
+        /// <summary>
+        /// Push through a gateway that speaks HTTP - Firebase, Expo, a house relay. The vendor's own
+        /// SDK, if a deployment wants one, replaces the implementation rather than configures it.
+        /// </summary>
+        public static void UsePush_HttpGateway(this IServiceCollection services)
+        {
+            services.AddHttpClient(HttpPushCommunicator.HttpClientName)
+                .AddServiceKitResilience();
+
+            services.AddSingleton<IPushCommunicator, HttpPushCommunicator>();
+        }
+
+        /// <summary>
+        /// Signed webhooks over HTTP.
+        ///
+        /// This is the one channel whose retry is turned ON for the POST: a delivery carries an id,
+        /// so a receiver that has seen it can drop it - which is precisely the condition under which
+        /// repeating a POST is safe.
+        /// </summary>
+        public static void UseWebhook_Http(this IServiceCollection services)
+        {
+            services.AddHttpClient(HttpWebhookCommunicator.HttpClientName)
+                .AddServiceKitResilience(options => options.RetryUnsafeMethods = true);
+
+            services.AddSingleton<IWebhookCommunicator, HttpWebhookCommunicator>();
+        }
+
+        /// <summary>
+        /// In-app notifications kept in this process - for development and tests. Where unread
+        /// notifications really live is a product decision, so a product replaces this and nothing
+        /// calling it changes.
+        /// </summary>
+        public static void UseInnerNotification_InMemory(this IServiceCollection services)
+        {
+            services.AddSingleton<IInnerNotificationCommunicator, InMemoryInnerNotificationCommunicator>();
+        }
+
         public static void UseEmail_Graph(this IServiceCollection services)
         {
             // The communicator is a singleton and the client comes from the factory per send, which

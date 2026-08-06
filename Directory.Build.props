@@ -11,4 +11,12 @@
     <NoWarn>NU1604,NU1602</NoWarn>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <!-- The resilience package warns when Grpc.Net.ClientFactory is older than 2.64, because a
+         resilience HANDLER on a gRPC client misbehaves there. We do not put one on a gRPC client -
+         gRPC gets its retries from the channel's own service config - so the warning does not apply.
+         Bumping Grpc across the platform is worth doing on its own, not as a side effect here. -->
+    <SuppressCheckGrpcNetClientFactoryVersion>true</SuppressCheckGrpcNetClientFactoryVersion>
+  </PropertyGroup>
+
 </Project>  
