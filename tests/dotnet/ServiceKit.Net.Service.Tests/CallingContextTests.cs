@@ -115,8 +115,13 @@ namespace ServiceKit.Net.Tests
         }
 
         [TestMethod]
-        public void Claims_are_never_written_into_outgoing_http_headers()
+        public void Claims_are_written_into_outgoing_http_headers()
         {
+            // This test used to assert the opposite, and the opposite was the bug (SRV-10): gRPC has
+            // always forwarded the claims, so the same call was authorized on one transport and
+            // anonymous on the other. Withholding them here did not make anything safer either -
+            // what makes the headers safe to read is that the ingress strips them from anything
+            // arriving from outside, not that this service declines to send them inside.
             var http = Request();
             http.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("role", "admin") }, "Bearer"));
             var ctx = CallingContext.FromHttpContext(http);
@@ -124,8 +129,7 @@ namespace ServiceKit.Net.Tests
             var outgoing = new HttpRequestMessage();
             ctx.FillHttpRequest(outgoing, "OrderService", "place");
 
-            Assert.IsFalse(outgoing.Headers.Any(header => header.Key.StartsWith(ServiceConstans.const_claim)));
-            Assert.IsFalse(outgoing.Headers.Any(header => header.Value.Any(value => value == "admin")));
+            Assert.AreEqual("admin", outgoing.Headers.GetValues(ServiceConstans.const_claim + "role").Single());
         }
 
         [TestMethod]
@@ -177,6 +181,120 @@ namespace ServiceKit.Net.Tests
             Assert.AreEqual("Gateway.handle", clone.CallStack);
             // the original must not move with it
             Assert.AreEqual("user-1", ctx.IdentityId);
+        }
+
+        [TestMethod]
+        public void The_claims_travel_on_an_http_hop_too()
+        {
+            // They always did over gRPC. Leaving them out here meant the authorization context
+            // survived a gRPC hop and was silently lost on an HTTP one.
+            var http = new DefaultHttpContext();
+            http.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("role", "admin") }, "test"));
+            var ctx = CallingContext.FromHttpContext(http);
+
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://downstream/orders");
+            ctx.FillHttpRequest(request, "OrderService", "getOrder");
+
+            Assert.AreEqual("admin", request.Headers.GetValues(ServiceConstans.const_claim + "role").Single());
+        }
+
+        [TestMethod]
+        public void A_service_to_service_call_arrives_with_the_claims_it_was_sent_with()
+        {
+            // The receiving end of the hop above. There is no principal to authenticate inside the
+            // mesh, which is why the headers are read - and why the ingress has to strip them from
+            // anything arriving from outside.
+            var sender = new DefaultHttpContext();
+            sender.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("role", "admin") }, "test"));
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://downstream/orders");
+            CallingContext.FromHttpContext(sender).FillHttpRequest(request, "OrderService", "getOrder");
+
+            var receiver = new DefaultHttpContext();
+            foreach (var header in request.Headers)
+                receiver.Request.Headers[header.Key] = string.Join(",", header.Value);
+
+            var ctx = CallingContext.FromHttpContext(receiver);
+
+            Assert.AreEqual("admin", ctx.Claims["role"]);
+        }
+
+        [TestMethod]
+        public void An_authenticated_principal_wins_over_what_the_headers_assert()
+        {
+            // The principal was proven; the headers were only claimed.
+            var http = new DefaultHttpContext();
+            http.Request.Headers[ServiceConstans.const_claim + "role"] = "admin";
+            http.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("role", "reader") }, "test"));
+
+            var ctx = CallingContext.FromHttpContext(http);
+
+            Assert.AreEqual("reader", ctx.Claims["role"]);
+        }
+
+        [TestMethod]
+        public void Filling_the_same_request_twice_overwrites_instead_of_throwing()
+        {
+            // Add throws on a header that is already there, so a retried request used to take the
+            // call down rather than send the same value again.
+            var ctx = CallingContext.FromHttpContext(Request());
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://downstream/orders");
+
+            ctx.FillHttpRequest(request, "OrderService", "getOrder");
+            ctx.FillHttpRequest(request, "OrderService", "getOrder");
+
+            Assert.AreEqual("corr-1", request.Headers.GetValues(ServiceConstans.const_correlation_id).Single());
+        }
+
+        [TestMethod]
+        public void The_header_nobody_read_is_gone()
+        {
+            var ctx = CallingContext.FromHttpContext(Request());
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://downstream/orders");
+
+            ctx.FillHttpRequest(request, "OrderService", "getOrder");
+
+            Assert.IsFalse(request.Headers.Contains("x-request-id"));
+        }
+
+        [TestMethod]
+        public void A_context_nobody_filled_in_is_not_a_user()
+        {
+            // IdentityTypes.User is the first value of the enum, so an unfilled context used to
+            // claim to be one - which is the one answer an authorization check must never be given
+            // for free.
+            Assert.AreEqual(CallingContext.IdentityTypes.Unknown, new CallingContext().IdentityType);
+        }
+
+        [TestMethod]
+        public void A_claim_is_found_by_the_name_it_was_sent_under_whatever_its_case()
+        {
+            // gRPC lowercases metadata keys and HTTP claim types keep their case, so the same claim
+            // used to be found over one transport and missed over the other.
+            var http = new DefaultHttpContext();
+            http.Request.Headers[ServiceConstans.const_identity_id] = "user-1";
+            http.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("Role", "admin") }, "test"));
+
+            var ctx = CallingContext.FromHttpContext(http);
+
+            Assert.AreEqual("admin", ctx.Claims["role"]);
+            Assert.AreEqual("admin", ctx.Claims["ROLE"]);
+        }
+
+        [TestMethod]
+        public void A_clone_carries_the_claims_and_does_not_share_them()
+        {
+            // The clone is how a service acts on someone's behalf. Dropping the claims there drops
+            // the authorization context exactly where it matters most.
+            var http = new DefaultHttpContext();
+            http.User = new ClaimsPrincipal(new ClaimsIdentity(new[] { new Claim("role", "admin") }, "test"));
+            var ctx = CallingContext.FromHttpContext(http);
+
+            var clone = ctx.CloneWithIdentity("service-1", "OrderService", CallingContext.IdentityTypes.Service);
+
+            Assert.AreEqual("admin", clone.Claims["role"]);
+
+            clone.Claims["role"] = "nobody";
+            Assert.AreEqual("admin", ctx.Claims["role"], "the clone must not reach back into the request that spawned it");
         }
     }
 }

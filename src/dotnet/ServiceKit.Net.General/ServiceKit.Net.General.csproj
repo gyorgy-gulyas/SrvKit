@@ -19,6 +19,10 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
+    <!-- Polly v8 through the Microsoft wrapper. It lives here, at the bottom, because both the
+         communicators and the service layer call other services and both need the same answer to
+         "what happens when the other end is briefly not there". -->
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.10.0" />
   </ItemGroup>
 
 </Project>

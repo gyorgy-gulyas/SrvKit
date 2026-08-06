@@ -20,8 +20,15 @@ namespace ServiceKit.Net
         public string TenantId { get; internal set; }
         public string IdentityId { get; internal set; }
         public string IdentityName { get; internal set; }
-        public IdentityTypes IdentityType { get; internal set; }
-        public Dictionary<string, string> Claims { get; internal set; } = [];
+        // Unknown rather than the first enum value. A context nobody filled in used to read as
+        // IdentityTypes.User, which is the one answer an authorization check must never be given for
+        // free.
+        public IdentityTypes IdentityType { get; internal set; } = IdentityTypes.Unknown;
+
+        // Case insensitive on purpose: the same claim used to resolve differently depending on the
+        // transport it arrived over, because gRPC metadata keys are lowercased by the protocol and
+        // HTTP claim types are not.
+        public Dictionary<string, string> Claims { get; internal set; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public ILogger Logger { get; internal set; } = NullLogger.Instance;
 
         public class ClientInfoData
@@ -68,7 +75,7 @@ namespace ServiceKit.Net
             int GetInt(string key) =>
                 int.TryParse(Get(key), out var result) ? result : 0;
 
-            ctx.Claims = new Dictionary<string, string>(metaMap.Count);
+            ctx.Claims = new Dictionary<string, string>(metaMap.Count, StringComparer.OrdinalIgnoreCase);
             foreach (var kv in metaMap)
             {
                 if (kv.Key.StartsWith(ServiceConstans.const_claim))
@@ -111,13 +118,30 @@ namespace ServiceKit.Net
             int GetInt(string key) =>
                 int.TryParse(Get(key), out var result) ? result : 0;
 
-            // Claims most már a felhasználói identity-ből jön
-            ctx.Claims = new Dictionary<string, string>();
+            ctx.Claims = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
             if (user?.Identity?.IsAuthenticated == true)
             {
+                // An authenticated principal is the authority: it was proven, the headers were only
+                // asserted.
                 foreach (var claim in user.Claims)
-                {
                     ctx.Claims[claim.Type] = claim.Value;
+            }
+            else
+            {
+                // No principal - this is the service-to-service case, where the caller passes the
+                // context on in headers because there is nothing to authenticate against inside the
+                // mesh. The gRPC side has always worked this way; without it here, the same call was
+                // authorized differently depending on which transport it took.
+                //
+                // DEPLOYMENT RULE that comes with it: the ingress must strip claim-* and identity-*
+                // from anything arriving from outside, or a caller can name their own claims. These
+                // headers are trusted because the network they arrive on is, and for no other
+                // reason.
+                foreach (var header in headers)
+                {
+                    if (header.Key.StartsWith(ServiceConstans.const_claim, StringComparison.OrdinalIgnoreCase) == true)
+                        ctx.Claims[header.Key.Substring(ServiceConstans.const_claim.Length)] = header.Value.ToString();
                 }
             }
 
@@ -198,18 +222,27 @@ namespace ServiceKit.Net
         public void FillHttpRequest(HttpRequestMessage request, string serviceName, string methodName)
         {
             var headers = request.Headers;
-            headers.Add("x-request-id", Guid.NewGuid().ToString());
 
+            // Set, not Add: Add throws on a header that is already there, so a request message that
+            // is retried or filled twice took the call down instead of overwriting a value with the
+            // same value.
+            //
+            // The x-request-id this used to invent is gone. Nothing on the receiving side ever read
+            // it - the correlation id below is the identity of the call, and an unread header is
+            // noise that looks like a feature.
             void Set(string key, string value)
             {
-                if (!string.IsNullOrWhiteSpace(value))
-                    headers.Add(key, value);
+                if (string.IsNullOrWhiteSpace(value) == true)
+                    return;
+
+                headers.Remove(key);
+                headers.Add(key, value);
             }
 
             void SetInt(string key, int value)
             {
                 if (value != 0)
-                    headers.Add(key, value.ToString(CultureInfo.InvariantCulture));
+                    Set(key, value.ToString(CultureInfo.InvariantCulture));
             }
 
             Set(ServiceConstans.const_correlation_id, CorrelationId);
@@ -232,7 +265,14 @@ namespace ServiceKit.Net
                 SetInt(ServiceConstans.const_api_client_kit_version, ClientInfo.ApiClientKitVersion);
             }
 
-            // -> Claims NEM kerülnek kiírásra fejlécekbe
+            // The claims travel too. They always did over gRPC, and leaving them out here meant the
+            // authorization context survived a gRPC hop and was silently lost on an HTTP one - the
+            // same call, authorized differently depending on which transport happened to be used.
+            if (Claims != null)
+            {
+                foreach (var claim in Claims)
+                    Set(ServiceConstans.const_claim + claim.Key, claim.Value);
+            }
         }
 
         object ICloneable.Clone() => CloneWithIdentity( IdentityId, IdentityName, IdentityType );
@@ -248,6 +288,9 @@ namespace ServiceKit.Net
                 IdentityName = identityName,
                 IdentityType = identityType,
                 Logger = Logger,
+                // Copied, not shared: a clone is usually made for background work, and background
+                // work that mutated this would be reaching into the request that spawned it.
+                Claims = new Dictionary<string, string>(Claims ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase),
                 ClientInfo = ClientInfo == null
                     ? null
                     : new ClientInfoData()
