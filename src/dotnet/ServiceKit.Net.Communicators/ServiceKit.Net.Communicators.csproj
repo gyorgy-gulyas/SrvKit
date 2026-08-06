@@ -8,7 +8,18 @@
   <ItemGroup>
     <PackageReference Include="Twilio" Version="7.12.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+
+    <!-- SMTP: the channel that works everywhere, including a catcher on a developer's machine -->
+    <PackageReference Include="MailKit" Version="4.17.0" />
+
+    <!-- Graph: only the token, not the SDK. The generated Graph model carries the whole API for the
+         sake of one POST, and this library is referenced by every service the platform has. -->
+    <!-- Held at the last version whose Azure.Core still lives in the .NET 8 world: from 1.14 on it
+         wants Microsoft.Extensions.* 10.x, which would drag this whole library forward for the sake
+         of one token. -->
+    <PackageReference Include="Azure.Identity" Version="1.13.2" />
   </ItemGroup>
 
   <ItemGroup>
