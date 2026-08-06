@@ -30,7 +30,12 @@ namespace ServiceKit.Net.Communicators
         {
             // The communicator is a singleton and the client comes from the factory per send, which
             // is what keeps the sockets pooled and the DNS honoured.
-            services.AddHttpClient(GraphEmailCommunicator.HttpClientName);
+            //
+            // With the house resilience pipeline, because Graph is a remote service that is
+            // occasionally busy and sendMail is worth one more try. The retry stays off for the POST
+            // itself - see AddServiceKitResilience - so a message is never sent twice.
+            services.AddHttpClient(GraphEmailCommunicator.HttpClientName)
+                .AddServiceKitResilience();
             services.AddSingleton<IEmailCommunicator, GraphEmailCommunicator>();
         }
     }
