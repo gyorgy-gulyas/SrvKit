@@ -11,6 +11,12 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.1" />
 
+    <!-- the generated controllers already write through Serilog's LogContext; the host is what
+         had never configured Serilog, so nothing they pushed ever reached a sink -->
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.4" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="5.0.0" />
+    <PackageReference Include="Serilog.Formatting.Compact" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>

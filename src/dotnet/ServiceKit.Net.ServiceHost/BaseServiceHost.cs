@@ -21,6 +21,9 @@ namespace ServiceKit.Net
             public bool WithGrpc = true;
             public bool WithRest = true;
             public bool WithReponseCompression = true;
+            // Structured logging is on by default because the generated controllers already write
+            // through Serilog's LogContext - a host that leaves it off throws their scope away.
+            public bool WithStructuredLogging = true;
             public string PathBase = default(string);
         }
 
@@ -50,6 +53,9 @@ namespace ServiceKit.Net
         private void AddServices(string[] args, Options options)
         {
             _builder = WebApplication.CreateBuilder(args);
+
+            if (options.WithStructuredLogging)
+                _builder.AddServiceKitLogging();
 
             _BeforeAddServices(_builder.Services, options);
 
@@ -93,6 +99,12 @@ namespace ServiceKit.Net
 
             // Add health endpoints like "/" and "/live" and "/rediness"
             AddDefaultRootings();
+
+            // First in the pipeline on purpose: everything logged after this - including whatever a
+            // derived host adds below, the CORS rejection and the authentication failure - belongs
+            // to a request that already has a correlation id.
+            if (options.WithStructuredLogging)
+                _app.UseServiceKitLogging();
 
             _BeforeBuild(_app, options);
 
