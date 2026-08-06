@@ -21,6 +21,16 @@ namespace ServiceKit.Net
             public bool WithGrpc = true;
             public bool WithRest = true;
             public bool WithReponseCompression = true;
+            // Structured logging is on by default because the generated controllers already write
+            // through Serilog's LogContext - a host that leaves it off throws their scope away.
+            public bool WithStructuredLogging = true;
+            // Tracing is on by default because it needs nothing installed: with no collector
+            // configured the spans are created, never exported, and their trace id is what ties a
+            // log line to the call it belongs to.
+            public bool WithTracing = true;
+            // Metrics likewise: the host serves its own scrape endpoint, so there is nothing to
+            // install for a service to be measurable.
+            public bool WithMetrics = true;
             public string PathBase = default(string);
         }
 
@@ -50,6 +60,15 @@ namespace ServiceKit.Net
         private void AddServices(string[] args, Options options)
         {
             _builder = WebApplication.CreateBuilder(args);
+
+            if (options.WithStructuredLogging)
+                _builder.AddServiceKitLogging();
+
+            if (options.WithTracing)
+                _builder.AddServiceKitTracing();
+
+            if (options.WithMetrics)
+                _builder.AddServiceKitMetrics();
 
             _BeforeAddServices(_builder.Services, options);
 
@@ -94,6 +113,15 @@ namespace ServiceKit.Net
             // Add health endpoints like "/" and "/live" and "/rediness"
             AddDefaultRootings();
 
+            // First in the pipeline on purpose: everything logged after this - including whatever a
+            // derived host adds below, the CORS rejection and the authentication failure - belongs
+            // to a request that already has a correlation id.
+            if (options.WithStructuredLogging || options.WithTracing)
+                _app.UseServiceKitCallIdentity();
+
+            if (options.WithStructuredLogging)
+                _app.UseServiceKitRequestLogging();
+
             _BeforeBuild(_app, options);
 
             _app.UseCors("cors_policy");
@@ -121,6 +149,12 @@ namespace ServiceKit.Net
             // a controller that really is public says so with [AllowAnonymous]. Requiring it while
             // no authentication scheme is registered would only fail every request, so a host that
             // opted out of authentication keeps the bare mapping.
+            // Mapped before the controllers and deliberately outside the authentication above: a
+            // scraper is not a user, and a /metrics that needs a bearer token is a /metrics nobody
+            // scrapes. Keep it off the public ingress instead.
+            if (options.WithMetrics)
+                _app.UseServiceKitMetrics();
+
             if (options.WithAuthentication)
                 _app.MapRestControllers();
             else
