@@ -31,6 +31,14 @@ namespace ServiceKit.Net
             // Metrics likewise: the host serves its own scrape endpoint, so there is nothing to
             // install for a service to be measurable.
             public bool WithMetrics = true;
+            // A second, HTTP/2-only port for gRPC, for hosts that run without TLS.
+            //
+            // Without TLS there is no ALPN, so one cleartext port cannot negotiate between HTTP/1.1
+            // and HTTP/2: Kestrel answers an h2c request on a mixed endpoint with HTTP_1_1_REQUIRED,
+            // and the gRPC surface is unreachable however correctly it was mapped. Set this and REST
+            // keeps its port while gRPC gets one of its own. With TLS neither is needed - one port
+            // serves both.
+            public int? GrpcPort = null;
             public string PathBase = default(string);
         }
 
@@ -74,6 +82,8 @@ namespace ServiceKit.Net
         {
             _builder = WebApplication.CreateBuilder(args);
 
+            _ConfigureCleartextGrpcEndpoint(options);
+
             if (options.WithStructuredLogging)
                 _builder.AddServiceKitLogging();
 
@@ -112,6 +122,38 @@ namespace ServiceKit.Net
             _ConfigureCors(_builder.Services);
 
             _AfterAddServices(_builder.Services, options);
+        }
+
+        // Gives gRPC a port of its own when the host runs without TLS.
+        //
+        // It has to go through Kestrel's endpoint CONFIGURATION rather than a ConfigureKestrel
+        // listener, because Kestrel takes one or the other: the moment an endpoint is declared, the
+        // urls are ignored. So whatever REST was going to listen on is restated here as an endpoint
+        // of its own, and the urls are cleared to keep the "overriding address(es)" warning out of
+        // every startup.
+        private void _ConfigureCleartextGrpcEndpoint(Options options)
+        {
+            if (options.WithGrpc == false || options.GrpcPort.HasValue == false)
+                return;
+
+            // Already configured by hand? Then it is not ours to rearrange.
+            if (_builder.Configuration.GetSection("Kestrel:Endpoints").GetChildren().Any() == true)
+                return;
+
+            var urls = _builder.Configuration[WebHostDefaults.ServerUrlsKey];
+            if (string.IsNullOrWhiteSpace(urls) == true)
+                urls = "http://localhost:5000";
+
+            var index = 0;
+            foreach (var url in urls.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            {
+                _builder.Configuration[$"Kestrel:Endpoints:ServiceKitRest{index}:Url"] = url.Trim();
+                index++;
+            }
+
+            _builder.Configuration["Kestrel:Endpoints:ServiceKitGrpc:Url"] = $"http://0.0.0.0:{options.GrpcPort.Value}";
+            _builder.Configuration["Kestrel:Endpoints:ServiceKitGrpc:Protocols"] = "Http2";
+            _builder.Configuration[WebHostDefaults.ServerUrlsKey] = string.Empty;
         }
 
         // Abstract extension points for derived classes to add additional services
