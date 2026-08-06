@@ -59,7 +59,9 @@ namespace ServiceKit.Net.Tests
             Assert.IsTrue(response.Headers.TryGetValues(ServiceConstans.const_correlation_id, out var answered));
             var correlationId = answered.Single();
             Assert.IsFalse(string.IsNullOrWhiteSpace(correlationId));
-            Assert.IsTrue(Guid.TryParse(correlationId, out _));
+            // it is the trace id of the request's span - see TracingTests for why that, and not a
+            // fresh guid
+            Assert.AreEqual(32, correlationId.Length);
 
             var logged = TestServiceHost.Sink.WithMessageContaining("something happened").Single();
             Assert.AreEqual(correlationId, CapturingSink.PropertyOf(logged, "CorrelationId"));

@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using OpenTelemetry.Trace;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,9 +42,16 @@ namespace ServiceKit.Net.Tests
             return (host, $"http://127.0.0.1:{port}");
         }
 
+        // The spans the host exported. AddOpenTelemetry is additive, so the test hangs its own
+        // exporter off the very provider the host configured rather than building a second one.
+        public static readonly List<Activity> Spans = new List<Activity>();
+
         protected override void _BeforeAddServices(IServiceCollection services, Options options)
         {
             services.AddSingleton<ILogEventSink>(Sink);
+
+            if (options.WithTracing == true)
+                services.AddOpenTelemetry().WithTracing(tracing => tracing.AddInMemoryExporter(Spans));
         }
 
         protected override void _AfterAddServices(IServiceCollection services, Options options)
@@ -60,6 +69,16 @@ namespace ServiceKit.Net.Tests
             {
                 logger.LogInformation("something happened");
                 return Results.Ok("said");
+            });
+
+            // a service starting a span of its own, through the platform's ActivitySource
+            app.MapGet("/do-some-work", () =>
+            {
+                using (var activity = ServiceKitDiagnostics.ActivitySource.StartActivity("some work"))
+                {
+                    activity?.SetTag("work.items", 42);
+                    return Results.Ok("worked");
+                }
             });
 
             // what a generated controller would see when it builds its CallingContext

@@ -24,6 +24,10 @@ namespace ServiceKit.Net
             // Structured logging is on by default because the generated controllers already write
             // through Serilog's LogContext - a host that leaves it off throws their scope away.
             public bool WithStructuredLogging = true;
+            // Tracing is on by default because it needs nothing installed: with no collector
+            // configured the spans are created, never exported, and their trace id is what ties a
+            // log line to the call it belongs to.
+            public bool WithTracing = true;
             public string PathBase = default(string);
         }
 
@@ -56,6 +60,9 @@ namespace ServiceKit.Net
 
             if (options.WithStructuredLogging)
                 _builder.AddServiceKitLogging();
+
+            if (options.WithTracing)
+                _builder.AddServiceKitTracing();
 
             _BeforeAddServices(_builder.Services, options);
 
@@ -103,8 +110,11 @@ namespace ServiceKit.Net
             // First in the pipeline on purpose: everything logged after this - including whatever a
             // derived host adds below, the CORS rejection and the authentication failure - belongs
             // to a request that already has a correlation id.
+            if (options.WithStructuredLogging || options.WithTracing)
+                _app.UseServiceKitCallIdentity();
+
             if (options.WithStructuredLogging)
-                _app.UseServiceKitLogging();
+                _app.UseServiceKitRequestLogging();
 
             _BeforeBuild(_app, options);
 

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -34,14 +35,15 @@ namespace ServiceKit.Net
                 configuration
                     // Before ReadFrom.Configuration on purpose, so a deployment can still raise it.
                     // The framework writes four events per request of its own (starting, executing,
-                    // executed, finished); UseSerilogRequestLogging below replaces all four with one
-                    // line that actually carries the request's identity - but only if the originals
-                    // are quietened, otherwise both are written and the log is worse than before.
+                    // executed, finished); UseServiceKitRequestLogging below replaces all four with
+                    // one line that actually carries the request's identity - but only if the
+                    // originals are quietened, otherwise both are written and the log is worse than
+                    // before.
                     .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
                     .ReadFrom.Configuration(context.Configuration)
                     .ReadFrom.Services(services)
-                    // this is what makes the per-request properties below - and the scope the
-                    // generated controllers push - appear on every event inside the request
+                    // this is what makes the per-request properties - and the scope the generated
+                    // controllers push - appear on every event inside the request
                     .Enrich.FromLogContext()
                     .Enrich.WithProperty("Service", context.HostingEnvironment.ApplicationName)
                     .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName);
@@ -57,45 +59,65 @@ namespace ServiceKit.Net
         }
 
         /// <summary>
-        /// Puts the call's identity onto every log event it produces, and answers with the
-        /// correlation id it used.
+        /// Establishes who the call belongs to, and hands that to BOTH the log and the trace.
         ///
         /// A request that arrives without a correlation id GETS one here. Reading the header and
         /// leaving it empty was the hole that made the whole idea useless: the first service in a
         /// chain is usually called by a browser, which sends no correlation id, so the entry point -
         /// the one request everything else descends from - was the one nobody could trace.
         ///
+        /// The id it invents is the TRACE ID of the current span, not a fresh guid. That is the
+        /// bridge: the log line and the distributed trace then name the call the same way, so a log
+        /// search leads to a trace and back without anyone having to correlate two unrelated
+        /// identifiers by hand. Only with no tracing at all does it fall back to a guid.
+        ///
         /// The id is written back into the REQUEST headers as well, so the CallingContext the
         /// controllers build sees it and carries it on to the next service. That covers gRPC too:
         /// its metadata is HTTP/2 headers, and this middleware runs before either transport.
         /// </summary>
-        public static void UseServiceKitLogging(this WebApplication app)
+        public static void UseServiceKitCallIdentity(this WebApplication app)
         {
             app.Use(async (context, next) =>
             {
                 var correlationId = _Header(context, ServiceConstans.const_correlation_id);
                 if (string.IsNullOrWhiteSpace(correlationId) == true)
                 {
-                    correlationId = Guid.NewGuid().ToString();
+                    correlationId = Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString();
                     context.Request.Headers[ServiceConstans.const_correlation_id] = correlationId;
                 }
 
                 // answered back so a caller can quote it in a bug report without reading its own logs
                 context.Response.Headers[ServiceConstans.const_correlation_id] = correlationId;
 
+                var callStack = _Header(context, ServiceConstans.const_call_stack);
+                var tenantId = _Header(context, ServiceConstans.const_tenant_id);
+                var identityId = _Header(context, ServiceConstans.const_identity_id);
+                var clientApplication = _Header(context, ServiceConstans.const_client_application);
+
+                _Tag(ServiceKitDiagnostics.tag_correlation_id, correlationId);
+                _Tag(ServiceKitDiagnostics.tag_call_stack, callStack);
+                _Tag(ServiceKitDiagnostics.tag_tenant_id, tenantId);
+                _Tag(ServiceKitDiagnostics.tag_identity_id, identityId);
+                _Tag(ServiceKitDiagnostics.tag_client_application, clientApplication);
+
                 using (LogContext.PushProperty("CorrelationId", correlationId))
-                using (_PushIfPresent("CallStack", _Header(context, ServiceConstans.const_call_stack)))
-                using (_PushIfPresent("TenantId", _Header(context, ServiceConstans.const_tenant_id)))
-                using (_PushIfPresent("IdentityId", _Header(context, ServiceConstans.const_identity_id)))
-                using (_PushIfPresent("ClientApplication", _Header(context, ServiceConstans.const_client_application)))
+                using (_PushIfPresent("CallStack", callStack))
+                using (_PushIfPresent("TenantId", tenantId))
+                using (_PushIfPresent("IdentityId", identityId))
+                using (_PushIfPresent("ClientApplication", clientApplication))
                 {
                     await next();
                 }
             });
+        }
 
-            // One line per request instead of the framework's two, and it carries the properties
-            // pushed above - which is the difference between "a request failed" and "this request,
-            // from this tenant, on behalf of this identity, failed".
+        /// <summary>
+        /// One line per request instead of the framework's four, carrying the properties
+        /// <see cref="UseServiceKitCallIdentity"/> pushed - which is the difference between "a
+        /// request failed" and "this request, from this tenant, on behalf of this identity, failed".
+        /// </summary>
+        public static void UseServiceKitRequestLogging(this WebApplication app)
+        {
             app.UseSerilogRequestLogging(options =>
             {
                 options.GetLevel = (httpContext, elapsed, exception) =>
@@ -116,6 +138,15 @@ namespace ServiceKit.Net
         private static string _Header(HttpContext context, string name)
         {
             return context.Request.Headers.TryGetValue(name, out var value) ? value.ToString() : string.Empty;
+        }
+
+        // No-op when nothing is listening: Activity.Current is null unless a tracer asked for spans.
+        private static void _Tag(string name, string value)
+        {
+            if (string.IsNullOrWhiteSpace(value) == true)
+                return;
+
+            Activity.Current?.SetTag(name, value);
         }
 
         // An empty property is worse than an absent one: it fills every line with noise and makes a
