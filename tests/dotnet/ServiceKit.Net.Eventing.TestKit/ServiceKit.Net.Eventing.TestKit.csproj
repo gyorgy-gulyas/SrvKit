@@ -4,19 +4,17 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
+    <!-- A library of tests, not a test project: it holds the conformance suite that the adapters
+         inherit. Running it on its own would find nothing to run. -->
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
     <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\dotnet\ServiceKit.Net.Eventing\ServiceKit.Net.Eventing.csproj" />
-    <ProjectReference Include="..\ServiceKit.Net.Eventing.TestKit\ServiceKit.Net.Eventing.TestKit.csproj" />
   </ItemGroup>
 
   <ItemGroup>

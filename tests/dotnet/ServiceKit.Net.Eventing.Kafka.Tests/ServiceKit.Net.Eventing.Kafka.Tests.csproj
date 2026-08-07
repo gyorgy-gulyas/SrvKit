@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Testcontainers.Kafka" Version="3.10.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
@@ -15,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\dotnet\ServiceKit.Net.Eventing\ServiceKit.Net.Eventing.csproj" />
+    <ProjectReference Include="..\..\..\src\dotnet\ServiceKit.Net.Eventing.Kafka\ServiceKit.Net.Eventing.Kafka.csproj" />
     <ProjectReference Include="..\ServiceKit.Net.Eventing.TestKit\ServiceKit.Net.Eventing.TestKit.csproj" />
   </ItemGroup>
 

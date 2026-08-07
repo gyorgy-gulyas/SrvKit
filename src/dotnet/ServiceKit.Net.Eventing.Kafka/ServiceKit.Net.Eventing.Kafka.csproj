@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- A SEPARATE package, and its tests are a separate project, so that the SrvKit core keeps the
+       property it has always had: no container to run its tests. A service that does not put its
+       facts on Kafka does not take the Kafka client with it either. -->
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.6.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ServiceKit.Net.Eventing\ServiceKit.Net.Eventing.csproj" />
+  </ItemGroup>
+
+</Project>
