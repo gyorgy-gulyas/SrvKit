@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- This is the ONE place in SrvKit that knows PolyPersist exists, and it is a separate package on
+       purpose: ServiceKit.Net.Eventing stays free of it, so a service that does not need a durable
+       outbox does not take a persistence library with it. Same shape as the broker adapters. -->
+  <ItemGroup>
+    <PackageReference Include="PolyPersist.Net" Version="1.0.19" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ServiceKit.Net.Eventing\ServiceKit.Net.Eventing.csproj" />
+  </ItemGroup>
+
+</Project>

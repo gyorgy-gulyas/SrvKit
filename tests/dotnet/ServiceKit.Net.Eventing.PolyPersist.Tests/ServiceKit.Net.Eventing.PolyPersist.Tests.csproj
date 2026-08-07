@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- The memory document store, so these run with no container - the same property the rest of
+       SrvKit's tests have. What they prove about atomicity on a relational backend is stated, not
+       demonstrated here; see the notes in the tests. -->
+  <ItemGroup>
+    <PackageReference Include="PolyPersist.Net.DocumentStore.Memory" Version="1.0.19" />
+    <PackageReference Include="PolyPersist.Net.Transactions" Version="1.0.19" />
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\dotnet\ServiceKit.Net.Eventing.PolyPersist\ServiceKit.Net.Eventing.PolyPersist.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+</Project>

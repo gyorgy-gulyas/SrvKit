@@ -20,10 +20,10 @@ namespace ServiceKit.Net.Eventing
     /// process is about to write to the broker, and it dies. Without an outbox the intent to send
     /// existed only in memory, so nothing and nobody knows the fact was ever recorded.
     ///
-    /// ATOMICITY: the append must join the same unit of work that saves the domain state. On a
-    /// backend where that is a real transaction, the guarantee is real. Where the storage layer can
-    /// only compensate, it is compensating - and an implementation is expected to say which it is
-    /// and to prove it with a test, rather than let the caller assume the stronger one.
+    /// ATOMICITY: the append must join the same unit of work that saves the domain state. How
+    /// strong that is depends on where the outbox lives - same store as the domain write, or a
+    /// different one - and an implementation is expected to say which it is and to prove it with a
+    /// test, rather than let a caller assume the stronger one.
     /// </summary>
     public interface IOutboxStore
     {
@@ -31,10 +31,13 @@ namespace ServiceKit.Net.Eventing
         /// Writes the envelopes as part of the caller's unit of work.
         /// </summary>
         /// <param name="transaction">
-        /// The unit of work that is saving the domain state. Passing null means there is none, and
-        /// an implementation that cannot honour atomicity without one should fail rather than write
-        /// anyway - a silent standalone write is the failure mode this whole interface exists to
-        /// prevent.
+        /// The unit of work that is saving the domain state.
+        ///
+        /// Null means there is none - a fact recorded on its own, with no state being saved
+        /// alongside it. That is legitimate and the write goes straight in: there is nothing to be
+        /// atomic WITH. What this library cannot detect is a caller that HAS state to save and
+        /// forgot to pass the transaction, which is why the repository is the one place that
+        /// appends.
         /// </param>
         Task Append(IReadOnlyList<EventEnvelope> envelopes, IOutboxTransaction transaction, CancellationToken cancellationToken = default);
 
