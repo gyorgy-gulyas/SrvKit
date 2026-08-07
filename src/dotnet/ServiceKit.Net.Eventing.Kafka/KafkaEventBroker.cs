@@ -27,7 +27,9 @@ namespace ServiceKit.Net.Eventing.Kafka
         private readonly KafkaEventBrokerOptions _options;
         private readonly ILogger _logger;
         private readonly IProducer<string, string> _producer;
-        private readonly ConcurrentBag<IConsumer<string, string>> _consumers = new();
+        // The pump THREADS, not the consumers. A consumer belongs to the thread that polls it and
+        // is closed by that thread - see Dispose.
+        private readonly ConcurrentBag<Thread> _pumps = new();
         private readonly CancellationTokenSource _stopping = new();
 
         public KafkaEventBroker(KafkaEventBrokerOptions options, ILogger<KafkaEventBroker> logger = null)
@@ -81,19 +83,48 @@ namespace ServiceKit.Net.Eventing.Kafka
             };
             _options.ConfigureConsumer?.Invoke(consumerConfig);
 
-            var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
-            consumer.Subscribe(topic);
-            _consumers.Add(consumer);
-
             var linked = CancellationTokenSource.CreateLinkedTokenSource(_stopping.Token, cancellationToken);
 
             // A long-running loop, not a Task.Run of async work: Consume blocks, and putting a
             // blocking call on a thread-pool thread for the life of the process starves it.
-            var pump = new Thread(() => Pump(consumer, channel, handler, linked.Token))
+            //
+            // The consumer is BUILT ON and CLOSED BY this thread. librdkafka's consumer is a native
+            // handle, and closing it from another thread while this one is inside
+            // rd_kafka_consumer_poll is a use-after-free: it does not throw, it takes the process
+            // down with an AccessViolationException that no catch block can see. Found by running
+            // the conformance suite against a real broker - the in-memory one could never have
+            // shown it.
+            var pump = new Thread(() =>
+            {
+                var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
+                try
+                {
+                    consumer.Subscribe(topic);
+                    Pump(consumer, channel, handler, linked.Token);
+                }
+                finally
+                {
+                    try
+                    {
+                        // Close leaves the group tidily, so a rebalance is not delayed by a session
+                        // timeout. It must happen here, on the only thread that ever polled.
+                        consumer.Close();
+                    }
+                    catch (Exception failure)
+                    {
+                        _logger.LogWarning(failure, "Closing the consumer of {Topic} failed.", topic);
+                    }
+
+                    consumer.Dispose();
+                    linked.Dispose();
+                }
+            })
             {
                 IsBackground = true,
                 Name = $"servicekit-eventing-{topic}-{consumerGroup}",
             };
+
+            _pumps.Add(pump);
             pump.Start();
 
             return Task.CompletedTask;
@@ -179,20 +210,21 @@ namespace ServiceKit.Net.Eventing.Kafka
         {
             _stopping.Cancel();
 
-            foreach (var consumer in _consumers)
+            // Wait for the pumps to leave their poll loops and close their own consumers. Disposing
+            // a consumer out from under a polling thread is what crashes the process, so shutdown
+            // waits rather than races.
+            foreach (var pump in _pumps)
             {
-                try
-                {
-                    consumer.Close();   // leaves the group tidily so a rebalance is not delayed
-                    consumer.Dispose();
-                }
-                catch { /* shutting down; a noisy close helps nobody */ }
+                if (pump.Join(_shutdownTimeout) == false)
+                    _logger.LogWarning("The consumer thread '{Thread}' did not stop within {Timeout}s.", pump.Name, _shutdownTimeout.TotalSeconds);
             }
 
             _producer?.Flush(TimeSpan.FromSeconds(5));
             _producer?.Dispose();
             _stopping.Dispose();
         }
+
+        private static readonly TimeSpan _shutdownTimeout = TimeSpan.FromSeconds(15);
     }
 
     /// <summary>
