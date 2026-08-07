@@ -40,7 +40,7 @@ namespace ServiceKit.Net.Eventing.Tests
     public sealed class NotifiedCustomer : IDomainEvent
     {
         public string SchemaId => "WebShop.Sales.Order.NotifiedCustomer";
-        string IDomainEvent.Channel => "WebShop.Sales";
+        string IRecordableFact.Channel => "WebShop.Sales";
 
         public string orderId { get; set; }
         public string channel { get; set; }

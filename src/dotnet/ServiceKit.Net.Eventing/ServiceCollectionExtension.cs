@@ -28,7 +28,10 @@ namespace ServiceKit.Net.Eventing
             // Scoped, not singleton: a recorder is a unit of work's pending list. Two requests
             // sharing one would hand each other's facts to whichever saved first.
             services.TryAddScoped<EventRecordingContext>();
-            services.TryAddScoped<IEventRecorder, EventRecorder>();
+            services.TryAddScoped<EventRecorder>();
+            services.TryAddScoped<IEventRecorder>(sp => sp.GetRequiredService<EventRecorder>());
+            // The same instance behind both facades: one pipe, two ways in.
+            services.TryAddScoped<IAuditRecorder>(sp => sp.GetRequiredService<EventRecorder>());
 
             services.AddHostedService<OutboxRelay>();
             services.AddHostedService<EventSubscriberHost>();

@@ -11,8 +11,14 @@ namespace ServiceKit.Net.Eventing
     ///
     /// It is scoped to a unit of work, not shared - two concurrent requests recording into the same
     /// list would hand each other's facts to whichever saved first.
+    ///
+    /// It implements BOTH facades - the event one and the audit one - because there is one pipe
+    /// underneath. A separate implementation would mean a second outbox, a second relay and a second
+    /// thing to go wrong at three in the morning. What is separate is the interface, not the
+    /// machinery: IEventRecorder.Record still takes only an IDomainEvent, so an audit fact cannot be
+    /// announced as if something should react to it.
     /// </summary>
-    public sealed class EventRecorder : IEventRecorder, IDisposable
+    public sealed class EventRecorder : IEventRecorder, IAuditRecorder, IDisposable
     {
         private readonly List<EventEnvelope> _pending = new();
         private readonly IEventSerializer _serializer;
@@ -30,7 +36,12 @@ namespace ServiceKit.Net.Eventing
 
         public bool HasPending => _pending.Count > 0;
 
-        public void Record(IDomainEvent @event, string partitionKey)
+        public void Record(IDomainEvent @event, string partitionKey) => RecordFact(@event, partitionKey);
+
+        /// <summary>Evidence. Same pipe, and reachable only through the audit facade.</summary>
+        void IAuditRecorder.Record(IAuditFact fact, string partitionKey) => RecordFact(fact, partitionKey);
+
+        private void RecordFact(IRecordableFact @event, string partitionKey)
         {
             if (@event == null)
                 throw new ArgumentNullException(nameof(@event));

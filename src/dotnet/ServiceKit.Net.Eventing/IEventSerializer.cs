@@ -15,7 +15,7 @@ namespace ServiceKit.Net.Eventing
     public interface IEventSerializer
     {
         string ContentType { get; }
-        string Serialize(IDomainEvent @event);
+        string Serialize(IRecordableFact fact);
         object Deserialize(string payload, Type eventType);
     }
 
@@ -53,10 +53,10 @@ namespace ServiceKit.Net.Eventing
         /// </summary>
         private static void KeepTheRoutingConstantsOffTheWire(JsonTypeInfo typeInfo)
         {
-            if (typeof(IDomainEvent).IsAssignableFrom(typeInfo.Type) == false || typeInfo.Type.IsInterface == true)
+            if (typeof(IRecordableFact).IsAssignableFrom(typeInfo.Type) == false || typeInfo.Type.IsInterface == true)
                 return;
 
-            var map = typeInfo.Type.GetInterfaceMap(typeof(IDomainEvent));
+            var map = typeInfo.Type.GetInterfaceMap(typeof(IRecordableFact));
             var routingGetters = new HashSet<MethodInfo>(map.TargetMethods);
 
             for (int i = typeInfo.Properties.Count - 1; i >= 0; i--)
@@ -74,11 +74,11 @@ namespace ServiceKit.Net.Eventing
 
         public string ContentType => "application/json";
 
-        public string Serialize(IDomainEvent @event)
+        public string Serialize(IRecordableFact fact)
         {
-            // The runtime type, not IDomainEvent: serializing through the interface would write an
+            // The runtime type, not the interface: serializing through the interface would write an
             // empty object, since the interface has only the two routing members.
-            return JsonSerializer.Serialize(@event, @event.GetType(), Options);
+            return JsonSerializer.Serialize(fact, fact.GetType(), Options);
         }
 
         public object Deserialize(string payload, Type eventType)
