@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace ServiceKit.Net.Eventing
 {
@@ -9,16 +12,20 @@ namespace ServiceKit.Net.Eventing
     /// It is scoped to a unit of work, not shared - two concurrent requests recording into the same
     /// list would hand each other's facts to whichever saved first.
     /// </summary>
-    public sealed class EventRecorder : IEventRecorder
+    public sealed class EventRecorder : IEventRecorder, IDisposable
     {
         private readonly List<EventEnvelope> _pending = new();
         private readonly IEventSerializer _serializer;
         private readonly EventRecordingContext _context;
+        private readonly EventingOptions _options;
+        private readonly ILogger _logger;
 
-        public EventRecorder(IEventSerializer serializer, EventRecordingContext context = null)
+        public EventRecorder(IEventSerializer serializer, EventRecordingContext context = null, IOptions<EventingOptions> options = null, ILogger<EventRecorder> logger = null)
         {
             _serializer = serializer ?? throw new ArgumentNullException(nameof(serializer));
             _context = context ?? new EventRecordingContext();
+            _options = options?.Value ?? new EventingOptions();
+            _logger = (ILogger)logger ?? NullLogger.Instance;
         }
 
         public bool HasPending => _pending.Count > 0;
@@ -57,6 +64,39 @@ namespace ServiceKit.Net.Eventing
             var drained = _pending.ToArray();
             _pending.Clear();
             return drained;
+        }
+
+        /// <summary>
+        /// The guard: at the end of the unit of work, anything still sitting here was recorded and
+        /// never sent.
+        ///
+        /// That is silent data loss - the state was saved, the caller got a success, and the world
+        /// was never told. Silence is the actual problem, so this always logs an error and counts a
+        /// metric; a deployment can alert on the counter.
+        ///
+        /// Throwing is opt-in and OFF by default, deliberately. This runs during scope disposal,
+        /// where an exception can mask the real one and can fail a request whose work already
+        /// succeeded - making a bad situation confusing on top of bad. Tests and development turn it
+        /// on, where failing loudly is exactly what you want.
+        /// </summary>
+        public void Dispose()
+        {
+            if (_pending.Count == 0)
+                return;
+
+            var lost = _pending.Select(e => e.SchemaId).Distinct().ToArray();
+            var count = _pending.Count;
+            _pending.Clear();
+
+            foreach (var schemaId in lost)
+                EventingDiagnostics.Unpublished.Add(1, new KeyValuePair<string, object>("schema_id", schemaId));
+
+            _logger.LogError(
+                "{Count} recorded fact(s) never reached the outbox: {Facts}. The state may have been saved without anyone being told. Save the aggregate through a transaction created with WithOutbox(), or append the facts explicitly.",
+                count, string.Join(", ", lost));
+
+            if (_options.ThrowOnUnpublishedFacts == true)
+                throw new InvalidOperationException($"{count} recorded fact(s) never reached the outbox: {string.Join(", ", lost)}.");
         }
     }
 

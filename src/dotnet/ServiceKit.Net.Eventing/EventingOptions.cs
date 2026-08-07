@@ -40,5 +40,16 @@ namespace ServiceKit.Net.Eventing
         /// which is the point of writing the intent down first.
         /// </summary>
         public bool RunRelay { get; set; } = true;
+
+        /// <summary>
+        /// Whether a unit of work that ends with facts still unsent should THROW rather than only
+        /// log.
+        ///
+        /// Off by default because the check runs during scope disposal, where an exception can mask
+        /// the real one and can fail a request whose work already succeeded. On in tests and in
+        /// development, where a mistake should stop the line rather than wait to be noticed in a
+        /// dashboard.
+        /// </summary>
+        public bool ThrowOnUnpublishedFacts { get; set; } = false;
     }
 }

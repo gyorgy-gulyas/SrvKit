@@ -41,6 +41,15 @@ namespace ServiceKit.Net.Eventing
             ServiceKitDiagnostics.Meter.CreateCounter<long>("servicekit_events_dead_lettered_total", description: "Events moved to the dead letter sink.");
 
         /// <summary>
+        /// Facts that were recorded and never reached the outbox.
+        ///
+        /// This one should always be zero. Anything else means the state was saved and the world
+        /// was not told - alert on it.
+        /// </summary>
+        public static readonly Counter<long> Unpublished =
+            ServiceKitDiagnostics.Meter.CreateCounter<long>("servicekit_events_unpublished_total", description: "Recorded facts that never reached the outbox.");
+
+        /// <summary>
         /// How long a fact waited between being recorded and leaving. The number that says whether
         /// the relay is keeping up.
         /// </summary>

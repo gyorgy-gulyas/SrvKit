@@ -7,7 +7,7 @@ using ServiceKit.Net.Eventing.PolyPersistStores;
 namespace ServiceKit.Net.Eventing.PolyPersist.Tests
 {
     /// <summary>Stands in for the domain row a repository saves alongside the fact.</summary>
-    public sealed class OrderRow : Entity, IDocument
+    public class OrderRow : Entity, IDocument
     {
         public string status { get; set; }
     }
