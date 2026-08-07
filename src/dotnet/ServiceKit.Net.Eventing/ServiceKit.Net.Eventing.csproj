@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- Nothing here needs a running anything. The in-memory broker, outbox and inbox meet the same
+       contracts as the real ones, so this package - and its tests - keep the property the SrvKit
+       core has always had: no container to run them. A broker adapter that DOES need one (Kafka,
+       RabbitMQ) is a separate package with its own test project, the way PolyPersist keeps its
+       Mongo tests apart from its memory tests. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- For ServiceKitDiagnostics: the counters below have to land on the Meter the host registers,
+         or they export into nowhere. -->
+    <ProjectReference Include="..\ServiceKit.Net.General\ServiceKit.Net.General.csproj" />
+  </ItemGroup>
+
+</Project>
