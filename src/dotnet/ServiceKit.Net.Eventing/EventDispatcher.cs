@@ -38,6 +38,26 @@ namespace ServiceKit.Net.Eventing
             _logger = logger;
         }
 
+        private async Task DrainRecordedFacts(IServiceScope scope, EventEnvelope cause)
+        {
+            var recorder = scope.ServiceProvider.GetService<IEventRecorder>();
+            if (recorder == null || recorder.HasPending == false)
+                return;
+
+            var outbox = scope.ServiceProvider.GetService<IOutboxStore>();
+            if (outbox == null)
+            {
+                // Nothing to write them to. Saying so beats letting the guard report them later as
+                // a mystery: the facts are real, the configuration is what is missing.
+                _logger.LogError("Handling {SchemaId} recorded facts, but no outbox is registered - they cannot leave.", cause.SchemaId);
+                return;
+            }
+
+            // No transaction: the handler saved no state alongside these, so there is nothing to be
+            // atomic with.
+            await outbox.Append(recorder.Drain(), transaction: null);
+        }
+
         public async Task Dispatch(EventEnvelope envelope, CancellationToken cancellationToken = default)
         {
             var subscriptions = _registry.For(envelope.SchemaId);
@@ -92,6 +112,16 @@ namespace ServiceKit.Net.Eventing
                     // means a handler that throws throws its own exception here, rather than one
                     // wrapped in a TargetInvocationException that hides it.
                     await subscription.Invoke(handler, context, payload, cancellationToken);
+
+                    // A handler is allowed to record facts of its own - that is how a chain of
+                    // consequences forms, and why the causation id was set above. Somebody has to
+                    // take them, and here it is nobody else: the handler has no repository save to
+                    // hang them on unless it made one.
+                    //
+                    // If it DID save through a transaction with an outbox, the recorder is already
+                    // empty and this is a no-op - the facts went out atomically with that state,
+                    // which is better. This is the fallback for the handler that only reacts.
+                    await DrainRecordedFacts(scope, envelope);
                 }
 
                 EventingDiagnostics.Handled.Add(1, new KeyValuePair<string, object>("schema_id", envelope.SchemaId));
