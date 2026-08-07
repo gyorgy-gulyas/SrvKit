@@ -41,7 +41,7 @@ namespace ServiceKit.Net.Eventing
         public async Task Dispatch(EventEnvelope envelope, CancellationToken cancellationToken = default)
         {
             var subscriptions = _registry.For(envelope.SchemaId);
-            if (subscriptions.Count == 0)
+            if (subscriptions.Length == 0)
             {
                 // Not an error. A channel carries every fact of its context, and a subscriber is
                 // expected to care about a few of them.
@@ -87,11 +87,11 @@ namespace ServiceKit.Net.Eventing
                     }
 
                     var handler = scope.ServiceProvider.GetRequiredService(subscription.HandlerType);
-                    var method = subscription.HandlerType.GetMethod(nameof(IEventHandler<IDomainEvent>.Handle), new[] { typeof(EventContext), subscription.EventType, typeof(CancellationToken) });
-                    if (method == null)
-                        throw new InvalidOperationException($"The handler '{subscription.HandlerType.FullName}' does not implement IEventHandler<{subscription.EventType.Name}>.");
 
-                    await (Task)method.Invoke(handler, new object[] { context, payload, cancellationToken });
+                    // Compiled at registration, so nothing reflective happens per event. It also
+                    // means a handler that throws throws its own exception here, rather than one
+                    // wrapped in a TargetInvocationException that hides it.
+                    await subscription.Invoke(handler, context, payload, cancellationToken);
                 }
 
                 EventingDiagnostics.Handled.Add(1, new KeyValuePair<string, object>("schema_id", envelope.SchemaId));
