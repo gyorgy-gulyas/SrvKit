@@ -1,6 +1,6 @@
-<Project>
+﻿<Project>
   <PropertyGroup>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <Authors>György Gulyás</Authors>
     <Description>Dotnet Service helpers for microservice envionment</Description>

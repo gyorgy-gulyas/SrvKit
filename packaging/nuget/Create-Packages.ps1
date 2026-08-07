@@ -1,4 +1,4 @@
-param([switch]$ReleaseConfiguration, [switch]$OnlyPack)
+﻿param([switch]$ReleaseConfiguration, [switch]$OnlyPack)
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
@@ -25,7 +25,7 @@ $buildNumber = "$version"
 Write-Host "build project with version: $version"
 
 # Find all .csproj files (excluding those in /obj folders) and pack them
-$projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\\obj\\'-and $_.Name -notmatch '\.Test(s)?\.csproj$' }
+$projects = Get-ChildItem -Recurse -Filter *.csproj | Where-Object { $_.FullName -notmatch '\\obj\\'-and $_.Name -notmatch '\.Test(s|Kit)?\.csproj$' }
 
 foreach ($proj in $projects) {
     Write-Host "build: $proj"
